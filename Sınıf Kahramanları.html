@@ -217,6 +217,7 @@
                 </div>
                 
                 <div class="flex bg-white border-2 border-[var(--doodle-border)] rounded-lg shadow-sm overflow-hidden h-8">
+                    <button type="button" onclick="openHistoryModal()" class="px-3 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] cursor-pointer" title="Puan Geçmişi"><i data-lucide="list" class="w-4 h-4"></i></button>
                     <button type="button" id="btn-undo" onclick="undoPoint()" class="px-2 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] opacity-40 cursor-pointer" title="Geri Al"><i data-lucide="undo" class="w-4 h-4"></i></button>
                     <button type="button" id="btn-redo" onclick="redoPoint()" class="px-2 text-gray-600 hover:bg-gray-100 transition-colors opacity-40 cursor-pointer" title="İleri Al"><i data-lucide="redo" class="w-4 h-4"></i></button>
                 </div>
@@ -308,7 +309,12 @@
                     </div>
 
                     <!-- Aktif Hedefler Listesi -->
-                    <div id="active-targets-list" class="flex flex-col gap-3 overflow-y-auto pb-4 hide-scroll flex-1"></div>
+                    <div id="active-targets-list" class="flex flex-col gap-3 pb-4"></div>
+
+                    <div class="mt-4 border-t-2 border-dashed border-gray-200 pt-4">
+                        <h4 class="text-sm font-bold text-gray-500 mb-3 flex items-center gap-2"><i data-lucide="history" class="w-4 h-4"></i> Hedef Arşivi (Tamamlananlar)</h4>
+                        <div id="completed-targets-list" class="space-y-3 pb-8"></div>
+                    </div>
                 </div>
 
                 <!-- ÇARK -->
@@ -567,7 +573,12 @@
             
             <div id="auth-logged-out-view" class="w-full flex flex-col gap-3">
                 <input type="email" id="auth-email" placeholder="E-posta Adresi" class="w-full border-2 border-[var(--doodle-border)] rounded-lg p-3 text-sm font-bold outline-none bg-gray-50">
-                <input type="password" id="auth-password" placeholder="Şifre (En az 6 hane)" class="w-full border-2 border-[var(--doodle-border)] rounded-lg p-3 text-sm font-bold outline-none bg-gray-50">
+                <div class="relative w-full">
+                    <input type="password" id="auth-password" placeholder="Şifre (En az 6 hane)" class="w-full border-2 border-[var(--doodle-border)] rounded-lg p-3 text-sm font-bold outline-none bg-gray-50 pr-10">
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <i data-lucide="eye" id="auth-password-eye" class="w-5 h-5"></i>
+                    </button>
+                </div>
                 
                 <div class="flex gap-2 mt-2">
                     <button type="button" onclick="handleLogin()" class="doodle-btn doodle-btn-primary flex-1 py-2 font-bold text-sm">Giriş Yap</button>
@@ -832,6 +843,16 @@
                 </div>
                 
                 <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-[25px]" id="confetti-container"></div>
+            </div>
+        </div>
+
+        <div id="modal-history" style="display: none;" class="fixed inset-0 modal-overlay z-[160] justify-center items-center p-4">
+            <div class="doodle-box bg-white w-full max-w-md max-h-[80vh] flex flex-col p-5 relative">
+                <button type="button" onclick="closeModal('modal-history')" class="absolute top-2 right-3 text-2xl font-bold z-10">&times;</button>
+                <h3 class="text-xl font-bold mb-4 text-center border-b-2 border-dashed border-gray-300 pb-2"><i data-lucide="list" class="inline w-5 h-5 mr-1"></i> Puan Geçmişi</h3>
+                
+                <div id="history-list" class="flex-1 overflow-y-auto space-y-2 hide-scroll">
+                    </div>
             </div>
         </div>
 
@@ -1157,6 +1178,7 @@
                     if (!state.behaviors) state.behaviors = JSON.parse(JSON.stringify(defaultBehaviors));
                     if (!state.targetConfig) state.targetConfig = { isActive: false, name: '', requiredScore: 50, currentScore: 0, period: 'gunluk', notified: false };
                     if (!state.targetConfig.period) state.targetConfig.period = 'gunluk'; 
+                    if (!state.completedTargets) state.completedTargets = [];
                     
                     // Eski öğrencilere otomatik avatar ataması yap
                     let needsSave = false;
@@ -1666,11 +1688,61 @@
         }
 
         function completeTarget(id) {
-            createConfetti(); showToast("🎉 Harika! Hedef tamamlandı.");
-            setTimeout(() => { 
-                state.targets = state.targets.filter(t => t.id !== id); 
-                saveData(); updateTargetUI(); 
-            }, 3000);
+            const target = state.targets.find(t => t.id === id);
+            if (!target) return;
+
+            createConfetti(); 
+            showToast(`🎉 ${target.name} Hedefi Tamamlandı!`);
+
+            if (!state.completedTargets) state.completedTargets = [];
+            state.completedTargets.unshift({
+                ...target,
+                completionDate: new Date().toLocaleString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            });
+
+            state.targets = state.targets.filter(t => t.id !== id); 
+            saveData(); 
+            updateTargetUI(); 
+        }
+
+        function renderCompletedTargets() {
+            const list = document.getElementById('completed-targets-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            if (!state.completedTargets || state.completedTargets.length === 0) {
+                list.innerHTML = '<p class="text-xs text-gray-400 italic text-center">Henüz tamamlanan bir hedef yok.</p>';
+                return;
+            }
+
+            state.completedTargets.forEach(target => {
+                const el = document.createElement('div');
+                el.className = 'doodle-box p-3 bg-green-50 border-green-200 mb-2 relative';
+                el.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 pr-4">
+                            <h5 class="font-bold text-sm text-green-800 uppercase leading-tight">${target.name}</h5>
+                            <p class="text-[9px] text-green-600 font-bold mt-1">${target.completionDate}</p>
+                        </div>
+                        <button onclick="deleteCompletedTarget('${target.id}')" class="text-red-400 hover:text-red-600 p-1" title="Geçmişten Sil">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-[10px] text-gray-500 italic border-t border-green-100 pt-1">
+                        ${target.requiredScore} puanlık hedef başarıyla ulaşıldı.
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+            lucide.createIcons();
+        }
+
+        function deleteCompletedTarget(id) {
+            if(!confirm("Bu hedef kaydını geçmişten silmek istediğinize emin misiniz?")) return;
+            state.completedTargets = state.completedTargets.filter(t => t.id !== id);
+            saveData();
+            renderCompletedTargets();
+            showToast("Kayıt geçmişten silindi.");
         }
 
         function updateTargetUI() {
@@ -1740,6 +1812,9 @@
                     </div>
                 </div>`;
             });
+
+            // Arşivi de her seferinde güncelle
+            renderCompletedTargets();
         }
 
         // --- YENİ: SÜRE BİTİNCE YANIP SÖNME EFEKTİ ---
@@ -1868,9 +1943,16 @@
             shuffled.forEach((student, index) => { groups[index % groupCount].push(student); });
             
             state.activeGroups = groups; // SIFIR SENKRONİZASYON HATASI İÇİN
+            state.activeGroupNames = Array.from({ length: groupCount }, (_, i) => `${i + 1}. Grup`);
             saveData();
             renderActiveGroups();
             showToast("Gruplar oluşturuldu!");
+        }
+
+        function updateGroupName(index, val) {
+            if(!state.activeGroupNames) state.activeGroupNames = [];
+            state.activeGroupNames[index] = val;
+            saveData();
         }
 
         function renderActiveGroups() {
@@ -1892,7 +1974,7 @@
             state.activeGroups.forEach((group, index) => {
                 let html = `<div class="p-3 border-2 rounded-xl flex flex-col h-full ${groupColors[index % groupColors.length]}">
                     <div class="flex justify-between items-center border-b-2 border-dashed pb-2 mb-2 border-opacity-50" style="border-color: currentColor">
-                        <input type="text" value="${index + 1}. Grup" class="font-bold bg-transparent outline-none w-24 ${textColors[index % textColors.length]}" readonly>
+                        <input type="text" value="${state.activeGroupNames && state.activeGroupNames[index] ? state.activeGroupNames[index] : (index + 1) + '. Grup'}" onchange="updateGroupName(${index}, this.value)" class="font-bold bg-transparent outline-none w-32 ${textColors[index % textColors.length]}" placeholder="Grup Adı">
                         <div class="flex gap-1" style="${isBoard ? 'display:none;' : ''}">
                             <button type="button" onclick="giveGroupPoints(${index}, 1)" class="bg-green-500 text-white w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold shadow-sm">+</button>
                             <button type="button" onclick="giveGroupPoints(${index}, -1)" class="bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold shadow-sm">-</button>
@@ -2919,12 +3001,13 @@
         }
 
         function saveCurrentGroups() {
-            if (!currentGeneratedGroups || currentGeneratedGroups.length === 0) return;
+            if (!state.activeGroups || state.activeGroups.length === 0) return;
             
             const groupSet = {
                 id: 'g_' + Date.now(),
                 date: new Date().toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }),
-                data: JSON.parse(JSON.stringify(currentGeneratedGroups))
+                data: JSON.parse(JSON.stringify(state.activeGroups)),
+                names: state.activeGroupNames ? JSON.parse(JSON.stringify(state.activeGroupNames)) : null
             };
             
             if (!state.savedGroups) state.savedGroups = [];
@@ -2956,7 +3039,8 @@
                 el.className = 'doodle-box p-3 bg-gray-50 border-gray-300 mb-2';
                 let groupsPreview = '';
                 groupSet.data.forEach((group, idx) => {
-                    groupsPreview += `<div class="text-[10px] mb-1"><span class="font-bold">${idx+1}. Grup:</span> ${group.map(s => s.name.split(' ')[0]).join(', ')}</div>`;
+                    const gName = groupSet.names && groupSet.names[idx] ? groupSet.names[idx] : `${idx+1}. Grup`;
+                    groupsPreview += `<div class="text-[10px] mb-1"><span class="font-bold">${gName}:</span> ${group.map(s => s.name.split(' ')[0]).join(', ')}</div>`;
                 });
 
                 el.innerHTML = `
@@ -3086,7 +3170,8 @@
             state.records[currentDate].homeworks.push({
                 id: 'hw_' + Date.now(),
                 title: title,
-                scores: {} // {studentId: '85'}
+                scores: {}, // {studentId: '85'}
+                statuses: {}
             });
 
             titleInput.value = '';
@@ -3500,6 +3585,102 @@
         }
 
         document.getElementById('new-student-name').addEventListener('keypress', function(e) { if (e.key === 'Enter') addStudent(); });
+
+        // --- ŞİFREYİ GÖSTER/GİZLE ---
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('auth-password');
+            const eyeIcon = document.getElementById('auth-password-eye');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        // --- PUAN GEÇMİŞİ (TARİHÇE) ---
+        function openHistoryModal() {
+            renderHistoryModal();
+            openModal('modal-history');
+        }
+
+        function renderHistoryModal() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+            
+            if (undoStack.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 text-sm mt-4">Henüz bir puan işlemi yapılmadı.</p>';
+                return;
+            }
+
+            // Geriye doğru döngü: En son yapılan işlem en üstte görünür
+            for (let i = undoStack.length - 1; i >= 0; i--) {
+                const action = undoStack[i];
+                let studentNames = action.students.map(id => {
+                    const student = state.students.find(s => s.id === id);
+                    return student ? getShortenedName(student.name) : 'Silinmiş Öğrenci';
+                }).join(', ');
+
+                // Çoklu grup/sınıf işlemlerinde ismi çok uzatmamak için
+                if (action.students.length > 3) {
+                    studentNames = `${action.students.length} Öğrenciye Toplu`;
+                }
+
+                const pointClass = action.points > 0 ? 'text-green-600 bg-green-100 border-green-300' : 'text-red-600 bg-red-100 border-red-300';
+                const sign = action.points > 0 ? '+' : '';
+
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center p-2 border border-gray-200 rounded-lg bg-gray-50 shadow-sm';
+                el.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-800">${studentNames}</span>
+                        <span class="text-[10px] text-gray-500">Puan Verildi</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-xs px-2 py-1 rounded border ${pointClass}">${sign}${action.points}</span>
+                        <button onclick="undoSpecificAction(${i})" class="text-red-500 hover:text-red-700 bg-white border border-red-200 rounded p-1 shadow-sm" title="Bu işlemi geri al">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+            }
+            lucide.createIcons();
+        }
+
+        function undoSpecificAction(index) {
+            const action = undoStack[index];
+            if (!action) return;
+            
+            // Etkileri geri al
+            action.students.forEach(id => {
+                let record = getRecord(id);
+                if (action.points > 0) record.pos -= action.points; else record.neg -= action.points;
+            });
+
+            // Sınıf hedefini de senkronize et
+            if (action.targetDeltas && state.targets) {
+                state.targets.forEach(target => {
+                    if (action.targetDeltas[target.id]) {
+                        target.currentScore -= action.targetDeltas[target.id];
+                        if (target.currentScore < 0) target.currentScore = 0;
+                        if (target.currentScore > target.requiredScore) target.currentScore = target.requiredScore;
+                    }
+                });
+            }
+
+            // Geri alınan işlemi listeden (yığından) tamamen çıkar
+            undoStack.splice(index, 1);
+            
+            saveData();
+            renderScoringGrid();
+            updateTargetUI();
+            updateUndoRedoUI();
+            renderHistoryModal(); // Listeyi yenile
+            showToast("İşlem geri alındı.");
+        }
 
         init();
     </script>
