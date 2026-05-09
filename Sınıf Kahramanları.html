@@ -231,6 +231,7 @@
                 </div>
                 
                 <div class="flex bg-white border-2 border-[var(--doodle-border)] rounded-lg shadow-sm overflow-hidden h-8">
+                    <button type="button" onclick="openLinkModal()" class="px-3 text-blue-600 hover:bg-blue-50 transition-colors border-r-2 border-[var(--doodle-border)] cursor-pointer" title="Tahtaya Bağlantı Gönder"><i data-lucide="link" class="w-4 h-4"></i></button>
                     <button type="button" onclick="openHistoryModal()" class="px-3 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] cursor-pointer" title="Puan Geçmişi"><i data-lucide="list" class="w-4 h-4"></i></button>
                     <button type="button" id="btn-undo" onclick="undoPoint()" class="px-2 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] opacity-40 cursor-pointer" title="Geri Al"><i data-lucide="undo" class="w-4 h-4"></i></button>
                     <button type="button" id="btn-redo" onclick="redoPoint()" class="px-2 text-gray-600 hover:bg-gray-100 transition-colors opacity-40 cursor-pointer" title="İleri Al"><i data-lucide="redo" class="w-4 h-4"></i></button>
@@ -495,7 +496,14 @@
             </div>
 
         <!-- 7. ÖDEV TAKİP -->
-            <div id="view-homework" style="display: none;" class="h-full flex-col">
+            <div id="view-links" style="display: none;" class="h-full flex-col">
+                <div class="flex justify-between items-center mb-4 shrink-0">
+                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-blue-500"></i> Gönderilen Bağlantılar</h2>
+                </div>
+                <div id="shared-link-list-board" class="overflow-y-auto hide-scroll pb-4 space-y-3"></div>
+            </div>
+
+        <div id="view-homework" style="display: none;" class="h-full flex-col">
                 <div class="flex justify-between items-center mb-3">
                     <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="book-open" class="w-5 h-5 text-blue-500"></i> Ödev & Sınav Kaydı</h2>
                 </div>
@@ -932,6 +940,20 @@
             </div>
         </div>
 
+        <div id="modal-share-link" style="display: none;" class="fixed inset-0 modal-overlay z-[160] justify-center items-center p-4">
+            <div class="doodle-box bg-white w-full max-w-md max-h-[80vh] flex flex-col p-5 relative">
+                <button type="button" onclick="closeModal('modal-share-link')" class="absolute top-2 right-3 text-2xl font-bold z-10">&times;</button>
+                <h3 class="text-xl font-bold mb-4 text-center border-b-2 border-dashed border-gray-300 pb-2"><i data-lucide="link" class="inline w-5 h-5 mr-1 text-blue-500"></i> Tahtaya Bağlantı Gönder</h3>
+                <div class="flex gap-2 mb-4 shrink-0">
+                    <input type="text" id="new-shared-link" placeholder="Bağlantı veya metin yapıştır..." class="flex-1 border-2 border-[var(--doodle-border)] rounded-lg p-2 text-sm outline-none bg-gray-50 font-bold">
+                    <input type="file" id="file-upload-input" accept="image/*,.pdf" style="display: none;" onchange="handleFileUpload(event)">
+                    <button type="button" onclick="document.getElementById('file-upload-input').click()" class="doodle-btn bg-purple-50 text-purple-600 px-3 font-bold text-sm border-2 border-purple-200" title="Fotoğraf veya PDF Gönder"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+                    <button type="button" onclick="sendSharedLink()" class="doodle-btn doodle-btn-primary px-4 font-bold text-sm"><i data-lucide="send" class="w-4 h-4"></i></button>
+                </div>
+                <div id="shared-link-list-phone" class="flex-1 overflow-y-auto space-y-2 hide-scroll border-t-2 border-dashed border-gray-100 pt-2"></div>
+            </div>
+        </div>
+
         <div id="modal-history" style="display: none;" class="fixed inset-0 modal-overlay z-[160] justify-center items-center p-4">
             <div class="doodle-box bg-white w-full max-w-md max-h-[80vh] flex flex-col p-5 relative">
                 <button type="button" onclick="closeModal('modal-history')" class="absolute top-2 right-3 text-2xl font-bold z-10">&times;</button>
@@ -1172,6 +1194,7 @@
             try { if (typeof renderActiveLines === 'function') renderActiveLines(); } catch(e){}
             try { renderSavedGroups(); } catch(e){}
             try { renderSavedLines(); } catch(e){}
+            try { renderSharedLinks(); } catch(e){}
         }
 
         function getTodayString() {
@@ -1294,6 +1317,7 @@
                     if (!state.targetConfig) state.targetConfig = { isActive: false, name: '', requiredScore: 50, currentScore: 0, period: 'gunluk', notified: false };
                     if (!state.targetConfig.period) state.targetConfig.period = 'gunluk'; 
                     if (!state.completedTargets) state.completedTargets = [];
+                    if (!state.sharedLinks) state.sharedLinks = [];
                     
                     // Eski öğrencilere otomatik avatar ataması yap
                     let needsSave = false;
@@ -1320,6 +1344,7 @@
                 renderAttendanceList();
                 updateTimerDisplay();
                 updateTargetUI();
+                try { renderSharedLinks(); } catch(e){}
             } catch(e) { console.error("Hata", e); }
         }
 
@@ -1438,7 +1463,8 @@
             // İleride yeni sekmeler eklemek istersen bu diziye ekleyebilirsin
             const tabs = [
                 { id: 'activities', name: '🎯 Etkinlikler', target: 'view-activities' },
-                { id: 'report', name: '📊 Sıralamalar', target: 'view-report' }
+                { id: 'report', name: '📊 Sıralamalar', target: 'view-report' },
+                { id: 'links', name: '🔗 Bağlantılar', target: 'view-links' }
             ];
 
             tabs.forEach(tab => {
@@ -1462,7 +1488,7 @@
 
         function switchBoardTab(tabId) {
             // Tüm ana sekmeleri gizle
-            ['view-scoring', 'view-attendance', 'view-students', 'view-activities', 'view-report', 'view-homework', 'view-seating'].forEach(id => {
+            ['view-scoring', 'view-attendance', 'view-students', 'view-activities', 'view-report', 'view-homework', 'view-seating', 'view-links'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.style.display = 'none';
             });
@@ -1660,7 +1686,8 @@
                     try { if (typeof renderActiveGroups === 'function') renderActiveGroups(); } catch(e){}
                     try { if (typeof renderActiveLines === 'function') renderActiveLines(); } catch(e){}
                     try { renderSavedGroups(); } catch(e){}
-                    try { renderSavedLines(); } catch(e){}
+                    try { renderSavedLines(); } catch(e){}
+                    try { renderSharedLinks(); } catch(e){}
                     try { syncBoardMission(); } catch(e){} // YENİ: Tahtaya anında görevi yansıt
 
                     if (typeof isBoardMode !== 'undefined' && isBoardMode) {
@@ -1729,7 +1756,7 @@
 
         function switchTab(tabId) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-[#10b981]'));
-            ['scoring', 'attendance', 'students', 'activities', 'report', 'seating', 'homework', 'missions'].forEach(id => {
+            ['scoring', 'attendance', 'students', 'activities', 'report', 'seating', 'homework', 'missions', 'links'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
                 if (el) el.style.display = 'none'; 
             });
@@ -4205,6 +4232,218 @@
                 saveData(); syncBoardMission(); renderMissionsTab();
                 setTimeout(() => { if(state.currentOpenMissionId === missionId) closeBoardMission(); updateTargetUI(); }, 2000);
             }
+        }
+
+        function openLinkModal() {
+            renderSharedLinks();
+            openModal('modal-share-link');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.type.startsWith('image/')) {
+                // HD Kalitede ama çökmeyi engelleyen güvenli sıkıştırma
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height;
+                        
+                        // Sınırı 2500 px yaptık. Orijinale çok yakın, HD kalitedir ama sistemi çökertmez.
+                        const MAX_WIDTH = 2500; const MAX_HEIGHT = 2500;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Kaliteyi %90'a çıkardık (Gözle görülür bir kalite kaybı yaşanmaz)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        
+                        try {
+                            if (!state.sharedLinks) state.sharedLinks = [];
+                            state.sharedLinks.unshift({ id: 'link_' + Date.now(), text: dataUrl });
+                            saveData(); 
+                            renderSharedLinks(); 
+                            showToast("Fotoğraf tahtaya gönderildi!");
+                        } catch (err) {
+                            showToast("Hata: Dosya çok büyük, gönderilemedi!");
+                            state.sharedLinks.shift(); // Hataya düşerse bozuk veriyi sil
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                if (file.size > 8 * 1024 * 1024) {
+                    showToast("PDF çok büyük! Maksimum 8MB olmalı.");
+                    event.target.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        if (!state.sharedLinks) state.sharedLinks = [];
+                        state.sharedLinks.unshift({ id: 'link_' + Date.now(), text: e.target.result });
+                        saveData(); 
+                        renderSharedLinks(); 
+                        showToast("PDF tahtaya gönderildi!");
+                    } catch (err) {
+                        showToast("Hata: Hafıza sınırı aşıldı, gönderilemedi!");
+                        state.sharedLinks.shift();
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                showToast("Lütfen sadece fotoğraf veya PDF seçin.");
+            }
+            event.target.value = '';
+        }
+
+        function sendSharedLink() {
+            const input = document.getElementById('new-shared-link');
+            const text = input.value.trim();
+            if (!text) return;
+            if (!state.sharedLinks) state.sharedLinks = [];
+            state.sharedLinks.unshift({ id: 'link_' + Date.now(), text: text });
+            input.value = '';
+            saveData();
+            renderSharedLinks();
+            showToast("Tahtaya gönderildi!");
+        }
+
+        function deleteSharedLink(id) {
+            state.sharedLinks = state.sharedLinks.filter(l => l.id !== id);
+            saveData();
+            renderSharedLinks();
+            showToast("Bağlantı silindi.");
+        }
+
+        function downloadFile(dataUrl, fileType) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            const ext = fileType === 'pdf' ? 'pdf' : 'jpg';
+            link.download = `Sinif_Kahramanlari_Dosya_${Date.now()}.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("İndirme başlatıldı!");
+        }
+
+        function openDirectLink(url) {
+            let finalUrl = url.trim();
+            // Eğer fotoğraf gönderilmişse, tarayıcı engeline takılmamak için HTML ile yeni pencereye çiziyoruz
+            if (finalUrl.startsWith('data:image/')) {
+                const win = window.open();
+                if (win) win.document.write(`<body style="margin:0;display:flex;justify-content:center;align-items:center;background:#222;"><img src="${finalUrl}" style="max-width:100%;max-height:100vh;"></body>`);
+                else showToast("Açılır pencere (pop-up) engelleyiciyi kapatın!");
+            } 
+            // Eğer PDF gönderilmişse yine yeni pencerede gömülü (embed) olarak açıyoruz
+            else if (finalUrl.startsWith('data:application/pdf')) {
+                const win = window.open();
+                if (win) win.document.write(`<body style="margin:0;"><embed width="100%" height="100%" src="${finalUrl}" type="application/pdf"></body>`);
+                else showToast("Açılır pencere (pop-up) engelleyiciyi kapatın!");
+            } 
+            // Normal bir web bağlantısıysa direkt açıyoruz
+            else {
+                if (!/^https?:\/\//i.test(finalUrl) && finalUrl.includes('.')) {
+                    finalUrl = 'https://' + finalUrl;
+                }
+                window.open(finalUrl, '_blank');
+            }
+        }
+
+        function copyLinkText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Panoya kopyalandı!");
+            }).catch(() => {
+                showToast("Kopyalanamadı.");
+            });
+        }
+
+        function renderSharedLinks() {
+            const modalList = document.getElementById('shared-link-list-phone');
+            const boardList = document.getElementById('shared-link-list-board');
+            const links = state.sharedLinks || [];
+            
+            if (modalList) {
+                modalList.innerHTML = '';
+                if (links.length === 0) {
+                    modalList.innerHTML = '<p class="text-xs text-gray-400 text-center mt-4">Henüz gönderilen bir içerik yok.</p>';
+                } else {
+                    links.forEach(l => {
+                        const isImage = l.text.startsWith('data:image/');
+                        const isPdf = l.text.startsWith('data:application/pdf');
+                        
+                        let displayText = l.text;
+                        if (isImage) displayText = '<i data-lucide="image" class="w-4 h-4 inline mr-1 text-purple-500"></i> Gönderilen Fotoğraf';
+                        if (isPdf) displayText = '<i data-lucide="file-text" class="w-4 h-4 inline mr-1 text-red-500"></i> Gönderilen PDF Dosyası';
+                        
+                        modalList.innerHTML += `
+                            <div class="doodle-box p-3 bg-gray-50 border-[var(--doodle-border)] mb-2 flex justify-between items-center gap-2">
+                                <div class="text-sm font-bold text-gray-700 truncate flex-1">${displayText}</div>
+                                <button type="button" onclick="deleteSharedLink('${l.id}')" class="text-red-500 hover:text-red-700 p-1 bg-white border border-red-200 rounded shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        `;
+                    });
+                }
+            }
+            
+            if (boardList) {
+                boardList.innerHTML = '';
+                if (links.length === 0) {
+                    boardList.innerHTML = '<div class="text-center text-gray-400 mt-10"><i data-lucide="link" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>Gönderilen bir içerik yok.</div>';
+                } else {
+                    links.forEach(l => {
+                        const isImage = l.text.startsWith('data:image/');
+                        const isPdf = l.text.startsWith('data:application/pdf');
+                        
+                        if (isImage) {
+                            boardList.innerHTML += `
+                                <div class="doodle-box p-4 bg-white border-[var(--doodle-border)] mb-4 flex flex-col items-center justify-center shadow-sm">
+                                    <img src="${l.text}" class="max-w-full max-h-[65vh] object-contain rounded-lg border-2 border-gray-200 mb-4">
+                                    <div class="flex gap-2">
+                                        <button type="button" onclick="openDirectLink('${l.text}')" class="doodle-btn bg-gray-100 text-gray-700 px-4 py-2 text-sm font-bold flex items-center gap-2 border-2 border-[var(--doodle-border)]"><i data-lucide="maximize" class="w-4 h-4"></i> Tam Ekran</button>
+                                        <button type="button" onclick="downloadFile('${l.text}', 'jpg')" class="doodle-btn doodle-btn-primary px-4 py-2 text-sm font-bold flex items-center gap-2 border-2"><i data-lucide="download" class="w-4 h-4"></i> İndir</button>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (isPdf) {
+                            boardList.innerHTML += `
+                                <div class="doodle-box p-6 bg-white border-[var(--doodle-border)] mb-4 flex justify-between items-center gap-4 shadow-sm">
+                                    <div class="text-xl font-bold text-red-600 flex items-center gap-2"><i data-lucide="file-text" class="w-8 h-8"></i> PDF Dosyası Gönderildi</div>
+                                    <div class="flex gap-3 shrink-0">
+                                        <button type="button" onclick="openDirectLink('${l.text}')" class="doodle-btn bg-gray-100 text-gray-700 px-6 py-3 text-lg font-bold flex items-center gap-2 border-2 border-[var(--doodle-border)]"><i data-lucide="external-link" class="w-6 h-6"></i> Aç</button>
+                                        <button type="button" onclick="downloadFile('${l.text}', 'pdf')" class="doodle-btn doodle-btn-primary px-6 py-3 text-lg font-bold flex items-center gap-2 border-2"><i data-lucide="download" class="w-6 h-6"></i> İndir</button>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            const isLink = l.text.includes('.') && !l.text.includes(' ');
+                            const openButtonHtml = isLink ? `<button type="button" onclick="openDirectLink('${l.text}')" class="doodle-btn doodle-btn-primary px-6 py-3 text-lg font-bold flex items-center gap-2"><i data-lucide="external-link" class="w-6 h-6"></i> Direkt Aç</button>` : '';
+
+                            boardList.innerHTML += `
+                                <div class="doodle-box p-6 bg-white border-[var(--doodle-border)] mb-4 flex justify-between items-center gap-4 shadow-sm">
+                                    <div class="text-2xl font-bold text-gray-800 break-all flex-1 select-all">${l.text}</div>
+                                    <div class="flex gap-3 shrink-0">
+                                        <button type="button" onclick="copyLinkText('${l.text}')" class="doodle-btn bg-gray-100 text-gray-700 px-6 py-3 text-lg font-bold flex items-center gap-2 border-2 border-[var(--doodle-border)]"><i data-lucide="copy" class="w-6 h-6"></i> Kopyala</button>
+                                        ${openButtonHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+            }
+            if (window.lucide) lucide.createIcons();
         }
 
         init();

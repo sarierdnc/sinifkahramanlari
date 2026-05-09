@@ -12,7 +12,6 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.Share,
 		C3.Plugins.BinaryData,
 		C3.Plugins.PlatformInfo,
-		C3.Plugins.Sprite,
 		C3.Plugins.System.Cnds.OnLayoutStart,
 		C3.JavaScriptInEvents.EventSheet1_Event1_Act1,
 		C3.Plugins.System.Cnds.CompareVar,
@@ -23,8 +22,7 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.Share.Acts.Share,
 		C3.Plugins.System.Acts.Wait,
 		C3.Plugins.System.Acts.SetVar,
-		C3.Plugins.Browser.Acts.InvokeDownload,
-		C3.Plugins.Sprite.Acts.SetAnimFrame
+		C3.Plugins.Browser.Acts.InvokeDownload
 	];
 };
 self.C3_JsPropNameTable = [
@@ -39,7 +37,6 @@ self.C3_JsPropNameTable = [
 	{Share: 0},
 	{BinaryData: 0},
 	{PlatformInfo: 0},
-	{Dinozor01: 0},
 	{ADCodeAppOpen: 0},
 	{ADCodeRewarded: 0},
 	{ADCodeInterstitial: 0},
@@ -48,9 +45,7 @@ self.C3_JsPropNameTable = [
 	{yedek_icerik: 0},
 	{yedek_adi: 0},
 	{yedek_icer_uri: 0},
-	{indir_tetik: 0},
-	{hedef_dino_frame: 0},
-	{dino_tetik: 0}
+	{indir_tetik: 0}
 ];
 
 self.InstanceType = {
@@ -63,6 +58,5 @@ self.InstanceType = {
 	FileSystem: class extends self.IInstance {},
 	Share: class extends self.IInstance {},
 	BinaryData: class extends self.IBinaryDataInstance {},
-	PlatformInfo: class extends self.IInstance {},
-	Dinozor01: class extends self.ISpriteInstance {}
+	PlatformInfo: class extends self.IInstance {}
 }
