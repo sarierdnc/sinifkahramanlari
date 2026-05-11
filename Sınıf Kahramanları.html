@@ -620,6 +620,18 @@
                             <label class="text-xs font-bold text-gray-500 flex-1">Kazanılacak Puan:</label>
                             <input type="number" id="mission-t-points" value="100" class="w-20 border-2 border-[var(--doodle-border)] rounded-lg p-2 text-center text-sm font-bold outline-none bg-gray-50">
                         </div>
+                        
+                        <div class="flex items-center gap-2 mt-1 bg-orange-50 p-2 rounded-lg border border-orange-200">
+                            <input type="checkbox" id="mission-t-timed-check" onchange="document.getElementById('mission-t-time-inputs').style.display = this.checked ? 'flex' : 'none'" class="w-4 h-4 accent-orange-500 cursor-pointer">
+                            <label for="mission-t-timed-check" class="text-xs font-bold text-orange-700 cursor-pointer flex-1">Süre olsun mu? (Zamanlı Görev)</label>
+                        </div>
+                        <div id="mission-t-time-inputs" style="display: none;" class="flex items-center gap-2 mt-1 justify-center bg-gray-50 p-2 rounded-lg border border-gray-200 shadow-inner">
+                            <input type="number" id="mission-t-min" placeholder="Dk" min="0" value="5" class="w-16 border-2 border-[var(--doodle-border)] rounded-lg p-1.5 text-center text-sm font-bold outline-none bg-white">
+                            <span class="text-xs font-bold text-gray-500">dakika</span>
+                            <input type="number" id="mission-t-sec" placeholder="Sn" min="0" max="59" value="0" class="w-16 border-2 border-[var(--doodle-border)] rounded-lg p-1.5 text-center text-sm font-bold outline-none bg-white">
+                            <span class="text-xs font-bold text-gray-500">saniye</span>
+                        </div>
+
                         <p class="text-[10px] text-gray-400 italic">Not: Görev tahtada görünecek. Bitince buradan "Onayla" diyerek puanı vereceksiniz.</p>
                         <button type="button" onclick="sendMission('task')" class="doodle-btn doodle-btn-accent w-full py-3 mt-2 text-lg font-bold flex justify-center items-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Havuza Ekle</button>
                     </div>
@@ -999,6 +1011,11 @@
                 <h2 id="board-mission-text" class="text-3xl sm:text-5xl font-bold text-gray-800 mb-8 mt-4 leading-tight">
                     Soru metni buraya gelecek...
                 </h2>
+
+                <div id="board-mission-timer" style="display: none;" class="flex items-center justify-center gap-3 mb-8 bg-gray-50 px-8 py-4 rounded-3xl border-4 border-gray-200 shadow-inner">
+                    <i data-lucide="timer" class="w-10 h-10 sm:w-14 sm:h-14 text-red-500 animate-pulse"></i>
+                    <span id="board-mission-time-text" class="text-5xl sm:text-7xl font-bold text-red-500 tracking-widest font-variant-numeric tabular-nums" style="text-shadow: 2px 2px 0px rgba(0,0,0,0.1);">00:00</span>
+                </div>
 
                 <div id="board-mission-options" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full w-max-3xl mx-auto" style="display: none;">
                     </div>
@@ -2058,8 +2075,14 @@
                     const icon = m.type === 'question' ? 'help-circle' : 'rocket';
                     const color = m.type === 'question' ? 'border-blue-400 bg-blue-50' : 'border-orange-400 bg-orange-50';
 
+                    let cardTimerHtml = '';
+                    if (m.isTimed && !isDone && !isFailed) {
+                        cardTimerHtml = `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-bold text-xs px-2 py-1 rounded-lg border-2 border-white shadow-md timer-mission-${m.id}">00:00</div>`;
+                    }
+
                     cardsContainer.innerHTML += `
                         <div onclick="${(isFailed || isDone) ? '' : `openBoardMission('${m.id}')`}" class="doodle-box p-4 border-4 ${color} ${opacity} ${cursor} transition-transform relative flex flex-col justify-center items-center text-center min-h-[120px]">
+                            ${cardTimerHtml}
                             ${isFailed ? '<div class="absolute inset-0 flex items-center justify-center z-10 text-red-600 font-bold text-4xl rotate-12 backdrop-blur-sm bg-white/30 rounded-xl">ELENDİ</div>' : ''}
                             ${isDone ? '<div class="absolute inset-0 flex items-center justify-center z-10 text-green-600 font-bold text-4xl -rotate-12 backdrop-blur-sm bg-white/30 rounded-xl">TAMAM</div>' : ''}
                             <i data-lucide="${icon}" class="w-8 h-8 mb-2 ${m.type === 'question' ? 'text-blue-500' : 'text-orange-500'}"></i>
@@ -2247,11 +2270,11 @@
 
             state.activeGroups.forEach((group, index) => {
                 let html = `<div class="p-3 border-2 rounded-xl flex flex-col h-full ${groupColors[index % groupColors.length]}">
-                    <div class="flex justify-between items-center border-b-2 border-dashed pb-2 mb-2 border-opacity-50" style="border-color: currentColor">
-                        <input type="text" value="${state.activeGroupNames && state.activeGroupNames[index] ? state.activeGroupNames[index] : (index + 1) + '. Grup'}" onchange="updateGroupName(${index}, this.value)" class="font-bold bg-transparent outline-none w-32 ${textColors[index % textColors.length]}" placeholder="Grup Adı">
-                        <div class="flex gap-1" style="${isBoard ? 'display:none;' : ''}">
-                            <button type="button" onclick="giveGroupPoints(${index}, 1)" class="bg-green-500 text-white w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold shadow-sm">+</button>
-                            <button type="button" onclick="giveGroupPoints(${index}, -1)" class="bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold shadow-sm">-</button>
+                    <div class="flex justify-between items-center gap-1 border-b-2 border-dashed pb-2 mb-2 border-opacity-50" style="border-color: currentColor">
+                        <input type="text" value="${state.activeGroupNames && state.activeGroupNames[index] ? state.activeGroupNames[index] : (index + 1) + '. Grup'}" onchange="updateGroupName(${index}, this.value)" class="font-bold bg-transparent outline-none w-full min-w-0 text-sm sm:text-base ${textColors[index % textColors.length]}" placeholder="Grup Adı">
+                        <div class="flex gap-1 shrink-0" style="${isBoard ? 'display:none;' : ''}">
+                            <button type="button" onclick="giveGroupPoints(${index}, 1)" class="bg-green-500 hover:bg-green-600 text-white w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold shadow-sm transition-colors">+</button>
+                            <button type="button" onclick="giveGroupPoints(${index}, -1)" class="bg-red-500 hover:bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold shadow-sm transition-colors">-</button>
                         </div>
                     </div><ul class="space-y-1.5 flex-1">`;
                 group.forEach(s => {
@@ -4116,7 +4139,20 @@
                         </div>
                     `;
                 } else if (m.type === 'task' && m.status === 'active') {
-                    actionsHtml = `<button onclick="completeTaskMission('${m.id}')" class="bg-green-500 text-white px-3 py-1.5 rounded shadow text-xs font-bold w-full mt-2"><i data-lucide="check-circle" class="w-4 h-4 inline"></i> Görevi Onayla</button>`;
+                    let timerBtn = '';
+                    if (m.isTimed) {
+                        const icon = m.isRunning ? 'pause' : 'play';
+                        const color = m.isRunning ? 'bg-orange-500' : 'bg-blue-500';
+                        const label = m.isRunning ? 'Süreyi Durdur' : 'Süreyi Başlat';
+                        timerBtn = `<button onclick="toggleMissionTimer('${m.id}')" class="${color} text-white px-3 py-1.5 rounded shadow text-xs font-bold flex-1 flex items-center justify-center gap-1 border-2 border-white"><i data-lucide="${icon}" class="w-3 h-3"></i> ${label}</button>`;
+                    }
+                    
+                    actionsHtml = `
+                        <div class="flex gap-2 w-full mt-2">
+                            ${timerBtn}
+                            <button onclick="completeTaskMission('${m.id}')" class="bg-green-500 text-white flex-1 py-1.5 rounded shadow text-xs font-bold flex items-center justify-center gap-1 border-2 border-white"><i data-lucide="check-circle" class="w-4 h-4 inline"></i> Onayla</button>
+                        </div>
+                    `;
                 }
 
                 let topButtons = '';
@@ -4176,8 +4212,24 @@
             } else if (type === 'task') {
                 const text = document.getElementById('mission-t-text').value.trim();
                 const points = parseInt(document.getElementById('mission-t-points').value) || 100;
+                
+                // YENİ: Süre kontrolü
+                const isTimed = document.getElementById('mission-t-timed-check').checked;
+                const mins = parseInt(document.getElementById('mission-t-min').value) || 0;
+                const secs = parseInt(document.getElementById('mission-t-sec').value) || 0;
+                const totalSeconds = (mins * 60) + secs;
+
                 if (!text) { showToast("Görev metnini yazın!"); return; }
-                missionData.text = text; missionData.points = points;
+                if (isTimed && totalSeconds <= 0) { showToast("Lütfen geçerli bir süre girin!"); return; }
+
+                missionData.text = text; 
+                missionData.points = points;
+
+                if (isTimed) {
+                    missionData.isTimed = true;
+                    missionData.duration = totalSeconds;
+                    missionData.isRunning = false;
+                }
             }
 
             state.missions.push(missionData);
@@ -4186,6 +4238,12 @@
             
             document.querySelectorAll('#mission-form-container input[type="text"], #mission-form-container textarea').forEach(el => el.value = '');
             document.getElementById('mission-q-points').value = '50'; document.getElementById('mission-c-points').value = '50'; document.getElementById('mission-t-points').value = '100';
+            
+            // YENİ: Form sıfırlama
+            const timeCheck = document.getElementById('mission-t-timed-check');
+            if(timeCheck) { timeCheck.checked = false; document.getElementById('mission-t-time-inputs').style.display = 'none'; }
+            const tMin = document.getElementById('mission-t-min'); if(tMin) tMin.value = '5';
+            const tSec = document.getElementById('mission-t-sec'); if(tSec) tSec.value = '0';
         }
 
         function deleteMission(id) {
@@ -4212,6 +4270,59 @@
             state.currentOpenMissionId = id;
             saveData(); syncBoardMission(); renderMissionsTab();
         }
+
+        // Global timer mekanizması
+        function toggleMissionTimer(id) {
+            const m = state.missions.find(mi => mi.id === id);
+            if (!m || !m.isTimed) return;
+
+            if (!m.isRunning) {
+                m.isRunning = true;
+                m.lastTick = Date.now();
+            } else {
+                const elapsed = Math.floor((Date.now() - m.lastTick) / 1000);
+                m.duration = Math.max(0, m.duration - elapsed);
+                m.isRunning = false;
+            }
+            saveData();
+            renderMissionsTab();
+        }
+
+        function updateAllBoardTimers() {
+            if (!state.missions) return;
+            const now = Date.now();
+            
+            state.missions.forEach(m => {
+                if (!m.isTimed || m.status !== 'active') return;
+                
+                let currentTotal = m.duration;
+                if (m.isRunning) {
+                    const elapsed = Math.floor((now - m.lastTick) / 1000);
+                    currentTotal = Math.max(0, m.duration - elapsed);
+                }
+
+                const min = Math.floor(currentTotal / 60).toString().padStart(2, '0');
+                const sec = (currentTotal % 60).toString().padStart(2, '0');
+                const timeStr = `${min}:${sec}`;
+
+                document.querySelectorAll(`.timer-mission-${m.id}`).forEach(el => {
+                    el.innerText = timeStr;
+                    if (currentTotal <= 10 && currentTotal > 0) el.classList.add('animate-ping');
+                    else el.classList.remove('animate-ping');
+                });
+
+                if (currentTotal === 0 && m.isRunning && (typeof isBoardMode !== 'undefined' && isBoardMode)) {
+                    const audio = document.getElementById('alarm-sound');
+                    if(audio && !m.alarmPlayed) {
+                        audio.play().catch(e=>{});
+                        m.alarmPlayed = true; 
+                        flashScreen();
+                    }
+                }
+            });
+        }
+        
+        setInterval(updateAllBoardTimers, 1000);
 
         function closeBoardMission() {
             state.currentOpenMissionId = null;
@@ -4360,13 +4471,26 @@
                 optContainer.style.display = 'none';
                 waitContainer.style.display = 'flex';
                 
+                const timerContainer = document.getElementById('board-mission-timer');
+                
                 if (activeMission.status === 'completed') {
                      waitContainer.innerHTML = `<div class="text-4xl font-bold text-green-500 bg-green-100 p-6 rounded-2xl border-4 border-green-400 shadow-sm">GÖREV BAŞARIYLA TAMAMLANDI!</div>`;
+                     if (timerContainer) timerContainer.style.display = 'none';
                 } else {
                      waitContainer.innerHTML = `
                         <i data-lucide="loader" class="w-16 h-16 text-blue-500 animate-spin mb-4"></i>
                         <p class="text-xl sm:text-2xl font-bold text-gray-500">Öğretmeninizin onayı bekleniyor...</p>
                      `;
+                     
+                     if (activeMission.isTimed) {
+                         if (timerContainer) {
+                             timerContainer.style.display = 'flex';
+                             const textEl = document.getElementById('board-mission-time-text');
+                             if(textEl) textEl.className = `timer-mission-${activeMission.id} text-5xl sm:text-7xl font-bold text-red-500 tracking-widest font-variant-numeric tabular-nums`;
+                         }
+                     } else {
+                         if (timerContainer) timerContainer.style.display = 'none';
+                     }
                 }
                 if(window.lucide) lucide.createIcons();
             }
