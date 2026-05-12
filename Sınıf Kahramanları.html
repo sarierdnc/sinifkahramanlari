@@ -521,8 +521,18 @@
 
         <div id="view-links" style="display: none;" class="h-full flex-col">
                 <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-blue-500"></i> Gönderilen Bağlantılar</h2>
+                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-blue-500"></i> Link & Dosya Gönder</h2>
                 </div>
+
+                <div class="doodle-box p-3 mb-4 bg-blue-50 border-blue-200 shrink-0">
+                    <div class="flex gap-2">
+                        <input type="text" id="view-shared-link-input" placeholder="Bağlantı veya metin..." class="flex-1 border-2 border-[var(--doodle-border)] rounded-lg px-2 py-1 text-sm font-bold outline-none bg-white">
+                        <input type="file" id="view-file-upload-input" accept="image/*,.pdf" style="display: none;" onchange="handleFileUpload(event)">
+                        <button type="button" onclick="document.getElementById('view-file-upload-input').click()" class="bg-purple-100 text-purple-600 px-3 py-1 rounded-lg border-2 border-purple-200 font-bold text-sm" title="Dosya Seç"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="sendSharedLinkFromView()" class="bg-blue-500 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-sm hover:bg-blue-600 transition-colors">Gönder</button>
+                    </div>
+                </div>
+
                 <div id="shared-link-list-board" class="overflow-y-auto hide-scroll pb-4 space-y-3"></div>
             </div>
 
@@ -4834,6 +4844,19 @@
             showToast("Tahtaya gönderildi!");
         }
 
+        // YENİ: Sayfa üzerindeki inputtan gönderim yapmak için
+        function sendSharedLinkFromView() {
+            const input = document.getElementById('view-shared-link-input');
+            const text = input.value.trim();
+            if (!text) return;
+            if (!state.sharedLinks) state.sharedLinks = [];
+            state.sharedLinks.unshift({ id: 'link_' + Date.now(), text: text });
+            input.value = '';
+            saveData();
+            renderSharedLinks();
+            showToast("Tahtaya gönderildi!");
+        }
+
         function deleteSharedLink(id) {
             state.sharedLinks = state.sharedLinks.filter(l => l.id !== id);
             saveData();
@@ -4887,76 +4910,57 @@
             const modalList = document.getElementById('shared-link-list-phone');
             const boardList = document.getElementById('shared-link-list-board');
             const links = state.sharedLinks || [];
+            const isBoard = (typeof isBoardMode !== 'undefined' && isBoardMode);
             
-            if (modalList) {
-                modalList.innerHTML = '';
+            const targetLists = isBoard ? [boardList] : [modalList, boardList];
+
+            targetLists.forEach(listEl => {
+                if (!listEl) return;
+                listEl.innerHTML = '';
+
                 if (links.length === 0) {
-                    modalList.innerHTML = '<p class="text-xs text-gray-400 text-center mt-4">Henüz gönderilen bir içerik yok.</p>';
+                    listEl.innerHTML = `<div class="text-center text-gray-400 ${isBoard ? 'mt-20' : 'mt-10'}"><i data-lucide="link" class="${isBoard ? 'w-16 h-16' : 'w-10 h-10'} mx-auto mb-2 opacity-50"></i>Gönderilen bir içerik yok.</div>`;
                 } else {
                     links.forEach(l => {
                         const isImage = l.text.startsWith('data:image/');
                         const isPdf = l.text.startsWith('data:application/pdf');
-                        
-                        let displayText = l.text;
-                        if (isImage) displayText = '<i data-lucide="image" class="w-4 h-4 inline mr-1 text-purple-500"></i> Gönderilen Fotoğraf';
-                        if (isPdf) displayText = '<i data-lucide="file-text" class="w-4 h-4 inline mr-1 text-red-500"></i> Gönderilen PDF Dosyası';
-                        
-                        modalList.innerHTML += `
-                            <div class="doodle-box p-3 bg-gray-50 border-[var(--doodle-border)] mb-2 flex justify-between items-center gap-2">
-                                <div class="text-sm font-bold text-gray-700 truncate flex-1">${displayText}</div>
-                                <button type="button" onclick="deleteSharedLink('${l.id}')" class="text-red-500 hover:text-red-700 p-1 bg-white border border-red-200 rounded shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        const isLink = l.text.includes('.') && !l.text.includes(' ');
+
+                        let icon = 'link'; let iconCol = 'text-blue-500'; let label = l.text;
+                        if (isImage) { icon = 'image'; iconCol = 'text-purple-500'; label = 'Gönderilen Fotoğraf'; }
+                        if (isPdf) { icon = 'file-text'; iconCol = 'text-red-500'; label = 'Gönderilen PDF Dosyası'; }
+
+                        const fontSize = isBoard ? 'text-2xl' : 'text-xs';
+                        const iconSize = isBoard ? 'w-8 h-8' : 'w-4 h-4';
+                        const boxPadding = isBoard ? 'p-5' : 'p-2';
+
+                        listEl.innerHTML += `
+                            <div class="doodle-box ${boxPadding} bg-white border-2 border-[var(--doodle-border)] mb-2 flex justify-between items-center gap-4 shadow-sm">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <i data-lucide="${icon}" class="${iconSize} ${iconCol} shrink-0"></i>
+                                    <span class="${fontSize} font-bold text-gray-700 truncate">${label}</span>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="openDirectLink('${l.text}')" class="${isBoard ? 'px-6 py-3' : 'p-1.5'} bg-blue-50 text-blue-600 rounded-xl border-2 border-blue-200 font-bold flex items-center gap-2" title="Aç">
+                                        <i data-lucide="external-link" class="${isBoard ? 'w-6 h-6' : 'w-3.5 h-3.5'}"></i>
+                                        ${isBoard ? 'Aç' : ''}
+                                    </button>
+                                    ${isBoard && (isImage || isPdf) ? `
+                                        <button onclick="downloadFile('${l.text}', '${isPdf ? 'pdf' : 'jpg'}')" class="px-6 py-3 bg-green-50 text-green-600 rounded-xl border-2 border-green-200 font-bold flex items-center gap-2" title="İndir">
+                                            <i data-lucide="download" class="w-6 h-6"></i> İndir
+                                        </button>
+                                    ` : ''}
+                                    ${isBoard ? `<button onclick="copyLinkText('${l.text}')" class="px-6 py-3 bg-gray-50 text-gray-600 rounded-xl border-2 border-gray-300 font-bold flex items-center gap-2" title="Kopyala"><i data-lucide="copy" class="w-6 h-6"></i> Kopyala</button>` : ''}
+                                    <button onclick="deleteSharedLink('${l.id}')" class="${isBoard ? 'px-6 py-3' : 'p-1.5'} bg-red-50 text-red-500 rounded-xl border-2 border-red-200 font-bold flex items-center gap-2" title="Sil">
+                                        <i data-lucide="trash-2" class="${isBoard ? 'w-6 h-6' : 'w-3.5 h-3.5'}"></i>
+                                        ${isBoard ? 'Sil' : ''}
+                                    </button>
+                                </div>
                             </div>
                         `;
                     });
                 }
-            }
-            
-            if (boardList) {
-                boardList.innerHTML = '';
-                if (links.length === 0) {
-                    boardList.innerHTML = '<div class="text-center text-gray-400 mt-10"><i data-lucide="link" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>Gönderilen bir içerik yok.</div>';
-                } else {
-                    links.forEach(l => {
-                        const isImage = l.text.startsWith('data:image/');
-                        const isPdf = l.text.startsWith('data:application/pdf');
-                        
-                        if (isImage) {
-                            boardList.innerHTML += `
-                                <div class="doodle-box p-4 bg-white border-[var(--doodle-border)] mb-4 flex flex-col items-center justify-center shadow-sm">
-                                    <img src="${l.text}" class="max-w-full max-h-[65vh] object-contain rounded-lg border-2 border-gray-200 mb-4">
-                                    <div class="flex gap-2">
-                                        <button type="button" onclick="openDirectLink('${l.text}')" class="doodle-btn bg-gray-100 text-gray-700 px-4 py-2 text-sm font-bold flex items-center gap-2 border-2 border-[var(--doodle-border)]"><i data-lucide="maximize" class="w-4 h-4"></i> Tam Ekran</button>
-                                        <button type="button" onclick="downloadFile('${l.text}', 'jpg')" class="doodle-btn doodle-btn-primary px-4 py-2 text-sm font-bold flex items-center gap-2 border-2"><i data-lucide="download" class="w-4 h-4"></i> İndir</button>
-                                    </div>
-                                </div>
-                            `;
-                        } else if (isPdf) {
-                            boardList.innerHTML += `
-                                <div class="doodle-box p-6 bg-white border-[var(--doodle-border)] mb-4 flex justify-between items-center gap-4 shadow-sm">
-                                    <div class="text-xl font-bold text-red-600 flex items-center gap-2"><i data-lucide="file-text" class="w-8 h-8"></i> PDF Dosyası Gönderildi</div>
-                                    <div class="flex gap-3 shrink-0">
-                                        <button type="button" onclick="openDirectLink('${l.text}')" class="doodle-btn bg-gray-100 text-gray-700 px-6 py-3 text-lg font-bold flex items-center gap-2 border-2 border-[var(--doodle-border)]"><i data-lucide="external-link" class="w-6 h-6"></i> Aç</button>
-                                        <button type="button" onclick="downloadFile('${l.text}', 'pdf')" class="doodle-btn doodle-btn-primary px-6 py-3 text-lg font-bold flex items-center gap-2 border-2"><i data-lucide="download" class="w-6 h-6"></i> İndir</button>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            const isLink = l.text.includes('.') && !l.text.includes(' ');
-                            const openButtonHtml = isLink ? `<button type="button" onclick="openDirectLink('${l.text}')" class="doodle-btn doodle-btn-primary px-6 py-3 text-lg font-bold flex items-center gap-2"><i data-lucide="external-link" class="w-6 h-6"></i> Direkt Aç</button>` : '';
-
-                            boardList.innerHTML += `
-                                <div class="doodle-box p-6 bg-white border-[var(--doodle-border)] mb-4 flex justify-between items-center gap-4 shadow-sm">
-                                    <div class="text-2xl font-bold text-gray-800 break-all flex-1 select-all">${l.text}</div>
-                                    <div class="flex gap-3 shrink-0">
-                                        <button type="button" onclick="copyLinkText('${l.text}')" class="doodle-btn bg-gray-100 text-gray-700 px-6 py-3 text-lg font-bold flex items-center gap-2 border-2 border-[var(--doodle-border)]"><i data-lucide="copy" class="w-6 h-6"></i> Kopyala</button>
-                                        ${openButtonHtml}
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-                }
-            }
+            });
             if (window.lucide) lucide.createIcons();
         }
 
