@@ -231,12 +231,12 @@
                 </div>
                 
                 <div class="flex bg-white border-2 border-[var(--doodle-border)] rounded-lg shadow-sm overflow-hidden h-8">
-                    <button type="button" onclick="openLinkModal()" class="px-3 text-blue-600 hover:bg-blue-50 transition-colors border-r-2 border-[var(--doodle-border)] cursor-pointer" title="Tahtaya Bağlantı Gönder"><i data-lucide="link" class="w-4 h-4"></i></button>
-                    <button type="button" onclick="openHistoryModal()" class="px-3 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] cursor-pointer" title="Puan Geçmişi"><i data-lucide="list" class="w-4 h-4"></i></button>
-                    <button type="button" id="btn-undo" onclick="undoPoint()" class="px-2 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] opacity-40 cursor-pointer" title="Geri Al"><i data-lucide="undo" class="w-4 h-4"></i></button>
-                    <button type="button" id="btn-redo" onclick="redoPoint()" class="px-2 text-gray-600 hover:bg-gray-100 transition-colors opacity-40 cursor-pointer" title="İleri Al"><i data-lucide="redo" class="w-4 h-4"></i></button>
+                    <button type="button" id="btn-undo" onclick="undoPoint()" class="px-3 text-gray-600 hover:bg-gray-100 transition-colors border-r-2 border-[var(--doodle-border)] opacity-40 cursor-pointer" title="Geri Al"><i data-lucide="undo" class="w-4 h-4"></i></button>
+                    <button type="button" id="btn-redo" onclick="redoPoint()" class="px-3 text-gray-600 hover:bg-gray-100 transition-colors opacity-40 cursor-pointer" title="İleri Al"><i data-lucide="redo" class="w-4 h-4"></i></button>
                 </div>
             </div>
+
+            <div id="global-sub-nav" style="display: none;" class="gap-2 shrink-0 overflow-x-auto pb-1 hide-scroll w-full mt-1"></div>
         </header>
 
         <main class="app-main relative">
@@ -505,7 +505,21 @@
             </div>
 
         <!-- 7. ÖDEV TAKİP -->
-            <div id="view-links" style="display: none;" class="h-full flex-col">
+            <div id="view-history" style="display: none;" class="h-full flex-col">
+                <div class="flex justify-between items-center mb-4 shrink-0">
+                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="list" class="w-5 h-5 text-purple-500"></i> Puan Geçmişi</h2>
+                </div>
+                <div id="history-list-view" class="overflow-y-auto hide-scroll pb-4 space-y-2"></div>
+            </div>
+
+            <div id="view-board-badges" style="display: none;" class="h-full flex-col">
+                <div class="flex justify-between items-center mb-6 shrink-0">
+                    <h2 class="text-3xl font-bold flex items-center gap-3"><i data-lucide="award" class="w-10 h-10 text-yellow-500"></i> Rozet Panosu</h2>
+                </div>
+                <div id="board-badges-grid" class="grid grid-cols-3 md:grid-cols-5 gap-4 overflow-y-auto hide-scroll pb-10"></div>
+            </div>
+
+        <div id="view-links" style="display: none;" class="h-full flex-col">
                 <div class="flex justify-between items-center mb-4 shrink-0">
                     <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-blue-500"></i> Gönderilen Bağlantılar</h2>
                 </div>
@@ -645,37 +659,21 @@
 
         <!-- ALT NAVİGASYON -->
         <nav class="app-nav">
-            <button type="button" onclick="switchTab('scoring')" class="nav-item" id="nav-scoring">
-                <i data-lucide="star" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Puanlama</span>
-            </button>
-            <button type="button" onclick="switchTab('attendance')" class="nav-item" id="nav-attendance">
-                <i data-lucide="clipboard-check" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Yoklama</span>
-            </button>
-            <button type="button" onclick="switchTab('students')" class="nav-item active text-[#10b981]" id="nav-students">
+            <button type="button" onclick="switchMainCategory('sinif')" class="nav-item active text-[#10b981]" id="nav-sinif">
                 <i data-lucide="users" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Öğrenciler</span>
+                <span class="text-[9px] font-bold">Sınıf</span>
             </button>
-            <button type="button" onclick="switchTab('activities')" class="nav-item" id="nav-activities">
+            <button type="button" onclick="switchMainCategory('puan')" class="nav-item" id="nav-puan">
+                <i data-lucide="star" class="w-5 h-5"></i>
+                <span class="text-[9px] font-bold">Puan & Rapor</span>
+            </button>
+            <button type="button" onclick="switchMainCategory('etkinlik')" class="nav-item" id="nav-etkinlik">
                 <i data-lucide="zap" class="w-5 h-5"></i>
                 <span class="text-[9px] font-bold">Etkinlik</span>
             </button>
-            <button type="button" onclick="switchTab('report')" class="nav-item" id="nav-report">
-                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Raporlar</span>
-            </button>
-            <button type="button" onclick="switchTab('homework')" class="nav-item" id="nav-homework">
-                <i data-lucide="book-open" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Ödev/Sınav</span>
-            </button>
-            <button type="button" onclick="switchTab('seating')" class="nav-item" id="nav-seating">
-                <i data-lucide="layout-template" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Oturma</span>
-            </button>
-            <button type="button" onclick="switchTab('missions')" class="nav-item" id="nav-missions">
+            <button type="button" onclick="switchMainCategory('gorev')" class="nav-item" id="nav-gorev">
                 <i data-lucide="rocket" class="w-5 h-5"></i>
-                <span class="text-[9px] font-bold">Görevler</span>
+                <span class="text-[9px] font-bold">Görev & Ödev</span>
             </button>
         </nav>
 
@@ -1129,6 +1127,18 @@
         let undoStack = [];
         let redoStack = [];
 
+        let targetToDeleteId = null; // Hedef silme onayı için
+
+        // Zararlı kod (XSS) engelleme filtresi
+        function escapeHTML(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
         // Mobil Sürükle Bırak (Touch Drag & Drop)
         let draggedStudentId = null;
         let dragClone = null;
@@ -1326,18 +1336,29 @@
             return `<img src="${getAvatarUrl(student.avatarSeed)}" alt="avatar" class="color-avatar bg-white ${sizeClass} ${opacityClass} shrink-0 object-cover border-2" ${clickAttr} style="background-color: ${student.color || 'white'}">`;
         }
 
-        function getBadgeInfo(totalPos) {
-            if (totalPos >= 150) return { title: 'Kral/Kraliçe', icon: '👑', color: 'text-yellow-600', border: 'border-yellow-400' };
-            if (totalPos >= 100) return { title: 'Kahraman', icon: '🦸', color: 'text-purple-600', border: 'border-purple-400' };
-            if (totalPos >= 50)  return { title: 'Şövalye', icon: '🛡️', color: 'text-blue-600', border: 'border-blue-400' };
-            if (totalPos >= 20)  return { title: 'Savaşçı', icon: '⚔️', color: 'text-red-600', border: 'border-red-400' };
-            return { title: 'Çaylak', icon: '🌱', color: 'text-green-600', border: 'border-green-400' };
+        function getBadgeInfo(points) {
+            const badges = [
+                { threshold: 500, title: 'Galaksi Yıldızı', img: 'Rozet01_09.png' },
+                { threshold: 400, title: 'Kral Yıldız', img: 'Rozet01_08.png' },
+                { threshold: 300, title: 'Jet Yıldız', img: 'Rozet01_07.png' },
+                { threshold: 200, title: 'Şövalye Yıldız', img: 'Rozet01_06.png' },
+                { threshold: 150, title: 'Pelerinli Yıldız', img: 'Rozet01_05.png' },
+                { threshold: 100, title: 'Gözlüklü Yıldız', img: 'Rozet01_04.png' },
+                { threshold: 50,  title: 'Kuyruklu Yıldız', img: 'Rozet01_03.png' },
+                { threshold: 20,  title: 'Neşeli Yıldız', img: 'Rozet01_02.png' },
+                { threshold: 0,   title: 'Minik Yıldız', img: 'Rozet01_01.png' }
+            ];
+            return badges.find(b => points >= b.threshold) || badges[badges.length - 1];
         }
 
         function getAllTimePos(studentId) {
-            let total = 0;
-            for (const dStr in state.records) { if(state.records[dStr][studentId]) total += state.records[dStr][studentId].pos; }
-            return total;
+            let net = 0;
+            for (const dStr in state.records) { 
+                if(state.records[dStr][studentId]) {
+                    net += (state.records[dStr][studentId].pos - state.records[dStr][studentId].neg);
+                } 
+            }
+            return net;
         }
 
         function getRecord(studentId) {
@@ -1400,6 +1421,9 @@
                 updateTimerDisplay();
                 updateTargetUI();
                 try { renderSharedLinks(); } catch(e){}
+                
+                // Uygulama açıldığında ilk sekmeyi (Sınıf) yükle
+                setTimeout(() => switchMainCategory('sinif'), 100);
             } catch(e) { console.error("Hata", e); }
         }
 
@@ -1518,6 +1542,7 @@
             // İleride yeni sekmeler eklemek istersen bu diziye ekleyebilirsin
             const tabs = [
                 { id: 'activities', name: '🎯 Etkinlikler', target: 'view-activities' },
+                { id: 'board-badges', name: '🏅 Rozetler', target: 'view-board-badges' },
                 { id: 'report', name: '📊 Sıralamalar', target: 'view-report' },
                 { id: 'links', name: '🔗 Bağlantılar', target: 'view-links' }
             ];
@@ -1543,7 +1568,7 @@
 
         function switchBoardTab(tabId) {
             // Tüm ana sekmeleri gizle
-            ['view-scoring', 'view-attendance', 'view-students', 'view-activities', 'view-report', 'view-homework', 'view-seating', 'view-links'].forEach(id => {
+            ['view-scoring', 'view-attendance', 'view-students', 'view-activities', 'view-report', 'view-homework', 'view-seating', 'view-links', 'view-board-badges'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.style.display = 'none';
             });
@@ -1567,6 +1592,8 @@
                 if(isBoardMode) adjustActivityTabsForBoard();
             } else if (tabId === 'report') {
                 renderReport();
+            } else if (tabId === 'board-badges') {
+                renderBoardBadges();
             }
         }
         
@@ -1591,6 +1618,7 @@
 
         let currentRoomCode = null;
     let isSyncing = false;
+    let roomUnsubscribe = null;
 
     function updateSyncStatus(text, textColor = 'text-gray-600', bgColor = 'bg-gray-50') {
         const statusEl = document.getElementById('sync-status');
@@ -1712,8 +1740,12 @@
     }
 
     function listenRoom(code) {
+        if (roomUnsubscribe) {
+            roomUnsubscribe();
+            roomUnsubscribe = null;
+        }
         const roomRef = window.ref(window.firebaseDb, 'rooms/' + code);
-        window.onValue(roomRef, (snapshot) => {
+        roomUnsubscribe = window.onValue(roomRef, (snapshot) => {
             if (snapshot.exists()) {
                 isSyncing = true; 
                 try {
@@ -1743,9 +1775,10 @@
                     try { renderSavedGroups(); } catch(e){}
                     try { renderSavedLines(); } catch(e){}
                     try { renderSharedLinks(); } catch(e){}
-                    try { syncBoardMission(); } catch(e){} // YENİ: Tahtaya anında görevi yansıt
+                    try { syncBoardMission(); } catch(e){}
+                    try { if(document.getElementById('view-board-badges').style.display !== 'none') renderBoardBadges(); } catch(e){}
 
-                    if (typeof isBoardMode !== 'undefined' && isBoardMode) {
+                    if (typeof isBoardMode !== 'undefined' && isBoardMode) {
                         // DÜZELTME: Tahtanın sekme değiştirmesi TEMELLİ ENGELLENDİ.
                         // Akıllı tahta hangi sekmedeyse orada kalır, sadece veriler (puan vb.) anında güncellenir.
                         try { adjustActivityTabsForBoard(); } catch(e){}
@@ -1756,8 +1789,8 @@
                         document.getElementById('fb-pos').innerText = record.pos;
                         document.getElementById('fb-neg').innerText = record.neg;
                         const badge = getBadgeInfo(getAllTimePos(selectedStudentId));
-                        document.getElementById('fb-badge').innerHTML = `${badge.icon} ${badge.title}`;
-                        document.getElementById('fb-badge').className = `text-[11px] font-bold px-2 py-0.5 rounded border inline-block mb-1 bg-white ${badge.color} ${badge.border}`;
+                        document.getElementById('fb-badge').innerHTML = `<img src="${badge.img}" class="w-3.5 h-3.5 inline-block mr-1"> ${badge.title}`;
+                        document.getElementById('fb-badge').className = `text-[11px] font-bold px-2 py-0.5 rounded border flex items-center mb-1 bg-white text-gray-700 border-gray-300`;
                     }
                 } finally {
                     isSyncing = false; // ZAMAN AŞIMI ENGELİ KALDIRILDI! Anında senkronize olur.
@@ -1770,6 +1803,10 @@
     }
 
     function disconnectRoom(deleteFromCloud = true) {
+        if (roomUnsubscribe) {
+            roomUnsubscribe();
+            roomUnsubscribe = null;
+        }
         if (currentRoomCode && deleteFromCloud && window.firebaseDb) {
             const roomRef = window.ref(window.firebaseDb, 'rooms/' + currentRoomCode);
             window.remove(roomRef); // Buluttan sil
@@ -1809,24 +1846,84 @@
             setupWheel();
         }
 
-        function switchTab(tabId) {
+        const mainCategories = {
+            'sinif': [
+                { id: 'students', name: 'Öğrenci Listesi', icon: 'users', color: 'blue' },
+                { id: 'attendance', name: 'Yoklama', icon: 'clipboard-check', color: 'green' },
+                { id: 'seating', name: 'Oturma Planı', icon: 'layout-template', color: 'indigo' }
+            ],
+            'puan': [
+                { id: 'scoring', name: 'Puanlama', icon: 'star', color: 'yellow' },
+                { id: 'report', name: 'Sınıf Raporları', icon: 'bar-chart-2', color: 'purple' },
+                { id: 'history', name: 'Puan Geçmişi', icon: 'list', color: 'gray' }
+            ],
+            'etkinlik': [], // Etkinliklerin kendi iç sekme yapısı kullanılıyor
+            'gorev': [
+                { id: 'missions', name: 'Görev Havuzu', icon: 'rocket', color: 'red' },
+                { id: 'homework', name: 'Ödev/Sınav', icon: 'book-open', color: 'blue' },
+                { id: 'links', name: 'Linkler', icon: 'link', color: 'blue' }
+            ]
+        };
+
+        let currentSubTabs = {};
+
+        function switchMainCategory(categoryId) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-[#10b981]'));
-            ['scoring', 'attendance', 'students', 'activities', 'report', 'seating', 'homework', 'missions', 'links'].forEach(id => {
+            const navEl = document.getElementById(`nav-${categoryId}`);
+            if (navEl) navEl.classList.add('active', 'text-[#10b981]');
+
+            const subNav = document.getElementById('global-sub-nav');
+            
+            if (categoryId === 'etkinlik') {
+                subNav.style.display = 'none';
+                switchSubTab('activities');
+            } else {
+                subNav.style.display = 'flex';
+                subNav.innerHTML = '';
+                
+                mainCategories[categoryId].forEach(tab => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.id = `sub-btn-${tab.id}`;
+                    btn.onclick = () => switchSubTab(tab.id, categoryId);
+                    btn.className = 'flex-1 py-1.5 px-3 rounded-lg font-bold text-[12px] whitespace-nowrap bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5';
+                    btn.innerHTML = `<i data-lucide="${tab.icon}" class="w-4 h-4 text-${tab.color}-500"></i> ${tab.name}`;
+                    subNav.appendChild(btn);
+                });
+                lucide.createIcons();
+                
+                const targetSubTab = currentSubTabs[categoryId] || mainCategories[categoryId][0].id;
+                switchSubTab(targetSubTab, categoryId);
+            }
+        }
+
+        function switchSubTab(tabId, categoryId = null) {
+            if (categoryId) {
+                currentSubTabs[categoryId] = tabId;
+                mainCategories[categoryId].forEach(tab => {
+                    const btn = document.getElementById(`sub-btn-${tab.id}`);
+                    if (btn) {
+                        if (tab.id === tabId) {
+                            btn.classList.remove('bg-white', 'text-gray-600');
+                            btn.classList.add('bg-gray-800', 'text-white', 'border-gray-900');
+                        } else {
+                            btn.classList.add('bg-white', 'text-gray-600');
+                            btn.classList.remove('bg-gray-800', 'text-white', 'border-gray-900');
+                        }
+                    }
+                });
+            }
+
+            ['scoring', 'attendance', 'students', 'activities', 'report', 'seating', 'homework', 'missions', 'links', 'history'].forEach(id => {
                 const el = document.getElementById(`view-${id}`);
                 if (el) el.style.display = 'none'; 
             });
-            if (tabId === 'missions') renderMissionsTab(); // Görevler sekmesine girince ekranı ayarla
+
             const targetEl = document.getElementById(`view-${tabId}`);
             if (targetEl) targetEl.style.display = 'flex';
-            const navEl = document.getElementById(`nav-${tabId}`);
-            if (navEl) navEl.classList.add('active', 'text-[#10b981]');
 
-            // YENİ: Öğretmen telefondan ana sekme değiştirdiğinde anında kaydet
             state.activeMainTab = tabId;
-            // DÜZELTME: Sekme değiştirirken tahtadan veri geliyorsa ezilmesini engelle
-            if (typeof isSyncing !== 'undefined' && !isSyncing) {
-                saveData();
-            }
+            if (typeof isSyncing !== 'undefined' && !isSyncing) saveData();
 
             if(tabId === 'activities') setActivityTab(currentActivityTab);
             if(tabId === 'report') renderReport();
@@ -1835,6 +1932,50 @@
             if(tabId === 'attendance') renderAttendanceList();
             if(tabId === 'seating') renderSeatingPlan();
             if(tabId === 'homework') renderHomeworkList();
+            if(tabId === 'missions') renderMissionsTab();
+            if(tabId === 'links') renderSharedLinks();
+            if(tabId === 'history') renderHistoryView();
+        }
+
+        function renderHistoryView() {
+            const container = document.getElementById('history-list-view');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            if (undoStack.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 text-sm mt-4">Henüz bir puan işlemi yapılmadı.</p>';
+                return;
+            }
+
+            for (let i = undoStack.length - 1; i >= 0; i--) {
+                const action = undoStack[i];
+                let studentNames = action.students.map(id => {
+                    const student = state.students.find(s => s.id === id);
+                    return student ? getShortenedName(student.name) : 'Silinmiş Öğrenci';
+                }).join(', ');
+
+                if (action.students.length > 3) studentNames = `${action.students.length} Öğrenciye Toplu`;
+
+                const pointClass = action.points > 0 ? 'text-green-600 bg-green-100 border-green-300' : 'text-red-600 bg-red-100 border-red-300';
+                const sign = action.points > 0 ? '+' : '';
+
+                const el = document.createElement('div');
+                el.className = 'doodle-box p-3 mb-2 flex justify-between items-center bg-white shadow-sm';
+                el.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-gray-800">${studentNames}</span>
+                        <span class="text-[10px] text-gray-500">Puan Verildi</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-sm px-2 py-1 rounded border ${pointClass}">${sign}${action.points}</span>
+                        <button onclick="undoSpecificAction(${i}); renderHistoryView();" class="text-red-500 hover:text-red-700 bg-gray-50 border border-red-200 rounded p-2 shadow-sm" title="Geri Al">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+            }
+            lucide.createIcons();
         }
 
         // --- ETKİNLİK & HEDEF ---
@@ -1908,8 +2049,21 @@
             showToast("Yeni Hedef Eklendi!");
         }
 
-        function deleteTarget(id) {
+        function confirmDeleteTarget(id) {
+            targetToDeleteId = id;
+            openModal('modal-confirm-delete-target');
+        }
+
+        function executeDeleteTarget() {
+            if (!targetToDeleteId) return;
             // Doodle konseptine uygun hızlı silme
+            state.targets = state.targets.filter(t => t.id !== targetToDeleteId);
+            saveData(); updateTargetUI(); showToast("Hedef silindi.");
+            closeModal('modal-confirm-delete-target');
+            targetToDeleteId = null;
+        }
+
+        function deleteTarget(id) {
             state.targets = state.targets.filter(t => t.id !== id);
             saveData(); updateTargetUI(); showToast("Hedef silindi.");
         }
@@ -1975,10 +2129,10 @@
         function updateTargetUI() {
             if (!state.targets) state.targets = [];
             
-            // ESKİ TEKLİ HEDEF VERİSİ VARSA YENİ SİSTEME GÖÇ ETTİR (Veri kaybını önler)
+            // ESKİ TEKLİ HEDEF VERİSİ VARSA YENİ SİSTEME GÖÇ ETTİR VE ESKİYİ SİL
             if (state.targetConfig && state.targetConfig.isActive) {
                 state.targets.push({ id: 't_old_' + Date.now(), name: state.targetConfig.name, requiredScore: state.targetConfig.requiredScore, currentScore: state.targetConfig.currentScore, period: state.targetConfig.period, notified: state.targetConfig.notified });
-                state.targetConfig.isActive = false;
+                delete state.targetConfig; // Çöp veriyi tutma, tamamen sil.
                 saveData();
             }
 
@@ -2046,7 +2200,7 @@
                         </div>
                         <div class="flex gap-1" style="display: ${isBoard ? 'none' : 'flex'}">
                             <button type="button" onclick="completeTarget('${target.id}')" class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 border border-green-200 rounded shadow-sm flex items-center"><svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Tamamla</button>
-                            <button type="button" onclick="deleteTarget('${target.id}')" class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 border border-red-200 rounded shadow-sm">Sil</button>
+                            <button type="button" onclick="confirmDeleteTarget('${target.id}')" class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 border border-red-200 rounded shadow-sm">Sil</button>
                         </div>
                     </div>
                     
@@ -2485,6 +2639,10 @@
             }
 
             // Normal bir isim girildiyse tekli öğrenci ekle
+            if (state.students.some(s => s.name === name)) {
+                showToast("Bu isimde bir öğrenci zaten listede var!");
+                return;
+            }
             const randomColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
             const randomSeed = avatarSeedList[Math.floor(Math.random() * avatarSeedList.length)];
             state.students.push({ id: 's_' + Date.now().toString(), name: name, color: randomColor, avatarSeed: randomSeed });
@@ -2565,7 +2723,17 @@
                 showToast("Önce öğrenci seçmelisiniz!");
                 return;
             }
-            bulkSelectedIds.forEach(id => applyPoints(id, points));
+            
+            let totalDeltas = {};
+            bulkSelectedIds.forEach(id => {
+                let d = applyPoints(id, points, true); // true diyerek her defasında kaydetmesini engelliyoruz!
+                for (let k in d) { totalDeltas[k] = (totalDeltas[k] || 0) + d[k]; }
+            });
+            
+            undoStack.push({ students: Array.from(bulkSelectedIds), points: points, targetDeltas: totalDeltas });
+            redoStack = []; 
+            updateUndoRedoUI();
+
             showToast(`${bulkSelectedIds.size} Öğrenciye ${points > 0 ? '+' : ''}${points} Puan verildi`);
             saveData(); 
             renderScoringGrid();
@@ -2576,7 +2744,12 @@
         function openFeedback(id) {
             const student = state.students.find(s => s.id === id);
             if(!student) return;
-            selectedStudentId = id; const record = getRecord(id);
+            const record = getRecord(id);
+            if (record.att === 'gelmedi') {
+                showToast("Gelmedi olarak işaretlenen öğrenciye puan verilemez.");
+                return;
+            }
+            selectedStudentId = id;
             const badge = getBadgeInfo(getAllTimePos(id));
             
             document.getElementById('fb-name').innerText = student.name;
@@ -2584,10 +2757,10 @@
             document.getElementById('fb-pos').innerText = record.pos;
             document.getElementById('fb-neg').innerText = record.neg;
             
-            document.getElementById('fb-badge').style.display = 'inline-block';
+            document.getElementById('fb-badge').style.display = 'flex';
             document.getElementById('fb-stats-row').style.display = 'flex';
-            document.getElementById('fb-badge').innerHTML = `${badge.icon} ${badge.title}`;
-            document.getElementById('fb-badge').className = `text-[11px] font-bold px-2 py-0.5 rounded border inline-block mb-1 bg-white ${badge.color} ${badge.border}`;
+            document.getElementById('fb-badge').innerHTML = `<img src="${badge.img}" class="w-3.5 h-3.5 inline-block mr-1"> ${badge.title}`;
+            document.getElementById('fb-badge').className = `text-[11px] font-bold px-2 py-0.5 rounded border flex items-center mb-1 bg-white text-gray-700 border-gray-300`;
             
             openModal('modal-feedback');
         }
@@ -2656,6 +2829,11 @@
         // Hızlı Butonlar (Direkt +1 / -1)
         function quickApplyPoints(studentId, points, ev) {
             ev.stopPropagation(); // Modalı açmasını engelle
+            const record = getRecord(studentId);
+            if (record.att === 'gelmedi') {
+                showToast("Gelmedi olarak işaretlenen öğrenciye puan verilemez.");
+                return;
+            }
             
             let deltas = applyPoints(studentId, points);
             
@@ -2667,14 +2845,14 @@
         }
 
         // Asıl puan ekleme mantığı
-        function applyPoints(studentId, points) {
+        function applyPoints(studentId, points, skipSave = false) {
             let record = getRecord(studentId);
             if (points > 0) record.pos += points; else record.neg += points;
             
             let deltas = updateAllTargets(points);
             
-            // YENİ: Veriyi anında buluta gönder ki tahtadaki hedef barı saniyesinde dolsun
-            saveData(); 
+            // YENİ: Toplu işlemlerde kasmaması için kaydetmeyi erteleyebiliriz
+            if (!skipSave) saveData(); 
             return deltas;
         }
 
@@ -2742,6 +2920,19 @@
         // Güncellendi: Toplu seçim modunu destekler hale getirildi
         function renderScoringGrid() {
             const list = document.getElementById('scoring-list'); list.innerHTML = '';
+            
+            if (state.students.length === 0) {
+                list.innerHTML = `
+                    <div class="col-span-2 flex flex-col items-center justify-center p-8 text-center mt-4 border-4 border-dashed border-gray-300 rounded-3xl bg-gray-50">
+                        <i data-lucide="star" class="w-16 h-16 text-yellow-400 mb-4 opacity-50"></i>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">Öğrenci Bulunamadı</h3>
+                        <p class="text-sm text-gray-500 mb-4">Puanlama yapabilmek için 'Öğrenciler' sekmesinden sınıf listenizi oluşturun.</p>
+                        <button type="button" onclick="switchTab('students')" class="doodle-btn doodle-btn-primary px-6 py-2 font-bold">Öğrenciler Sekmesine Git</button>
+                    </div>`;
+                if(window.lucide) lucide.createIcons();
+                return;
+            }
+
             const alphabeticalStudents = [...state.students].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
             alphabeticalStudents.forEach(student => {
@@ -2780,7 +2971,7 @@
                     </div>
 
                     <div class="flex items-center gap-1 justify-center w-full px-1">
-                        <span class="text-[11px]" title="${badge.title}">${badge.icon}</span>
+                        <img src="${badge.img}" class="w-4 h-4 object-contain shrink-0" alt="${badge.title}">
                         <h3 class="font-bold text-[11px] leading-tight overflow-hidden text-ellipsis whitespace-nowrap ${isAbsent ? 'text-gray-400' : ''}" title="${student.name}">${getShortenedName(student.name)}</h3>
                     </div>
                     <div class="mt-1 flex gap-1 w-full justify-center ${isAbsent ? 'opacity-50' : ''}">
@@ -2795,6 +2986,19 @@
 
         function renderManagementList() {
             const list = document.getElementById('management-list'); list.innerHTML = '';
+            
+            if (state.students.length === 0) {
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-8 text-center mt-4 border-4 border-dashed border-gray-300 rounded-3xl bg-gray-50">
+                        <i data-lucide="user-plus" class="w-16 h-16 text-blue-400 mb-4 opacity-50"></i>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">Sınıfınız Şu An Boş!</h3>
+                        <p class="text-sm text-gray-500 mb-4">Hadi ilk öğrencinizi ekleyerek sınıf kahramanlarını oluşturmaya başlayın.</p>
+                        <button type="button" onclick="openModal('modal-add-student')" class="doodle-btn doodle-btn-accent px-6 py-2 font-bold text-lg animate-bounce">İlk Öğrenciyi Ekle</button>
+                    </div>`;
+                if(window.lucide) lucide.createIcons();
+                return;
+            }
+
             const alphabeticalStudents = [...state.students].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
             alphabeticalStudents.forEach(student => {
@@ -2870,14 +3074,15 @@
                         totalPos += state.records[dateStr][student.id].pos; totalNeg += state.records[dateStr][student.id].neg;
                     }
                 }
+                const netScore = totalPos - totalNeg;
                 const badge = getBadgeInfo(getAllTimePos(student.id)); const currentAtt = getRecord(student.id).att;
-                return { ...student, pos: totalPos, neg: totalNeg, badge: badge, currentAtt: currentAtt };
+                return { ...student, pos: totalPos, neg: totalNeg, net: netScore, badge: badge, currentAtt: currentAtt };
             });
 
             aggregatedStats.sort((a, b) => {
                 let valA, valB;
                 if (reportSortCol === 'name') { valA = a.name; valB = b.name; } 
-                else if (reportSortCol === 'pos') { valA = a.pos; valB = b.pos; } 
+                else if (reportSortCol === 'pos') { valA = a.net; valB = b.net; } // Artı yerine NET puana göre adil sırala 
                 else if (reportSortCol === 'neg') { valA = a.neg; valB = b.neg; }
 
                 if (valA === valB) return a.name.localeCompare(b.name, 'tr');
@@ -2918,7 +3123,7 @@
                     ${generateAvatarHTML(student, avatarSize)}
                     <div class="flex flex-col flex-1 min-w-0 overflow-hidden justify-center">
                         <div class="flex items-center gap-1 w-full mb-1">
-                            <span class="${isBoardMode ? 'text-xl' : 'text-sm'}" title="${student.badge.title}">${student.badge.icon}</span>
+                            <img src="${student.badge.img}" class="${isBoardMode ? 'w-8 h-8' : 'w-5 h-5'} object-contain" alt="${student.badge.title}">
                             <span class="font-bold ${nameTextSize} text-gray-800 truncate w-full" title="${student.name}">${getShortenedName(student.name)} ${attIndicator}</span>
                         </div>
                         <div class="flex gap-2">
@@ -4173,8 +4378,8 @@
                                     <span class="text-[10px] font-bold text-gray-500 uppercase">${typeText} - ${m.points} Puan</span>
                                     ${isOpen ? '<span class="text-[9px] bg-yellow-100 text-yellow-700 border border-yellow-300 px-1.5 py-0.5 rounded-md animate-pulse">Tahtada Açık</span>' : ''}
                                 </div>
-                                <div class="text-xs font-bold text-gray-800 break-words">${m.text}</div>
-                                ${isWaiting ? `<div class="mt-2 text-[11px] text-purple-700 bg-purple-100 p-2 rounded-lg border border-purple-200 font-bold"><span class="text-purple-500 text-[9px] block">ÖĞRENCİNİN CEVABI:</span>${m.studentAnswer}</div>` : ''}
+                                <div class="text-xs font-bold text-gray-800 break-words">${escapeHTML(m.text)}</div>
+                                ${isWaiting ? `<div class="mt-2 text-[11px] text-purple-700 bg-purple-100 p-2 rounded-lg border border-purple-200 font-bold"><span class="text-purple-500 text-[9px] block">ÖĞRENCİNİN CEVABI:</span>${escapeHTML(m.studentAnswer)}</div>` : ''}
                             </div>
                             <div class="flex gap-1 shrink-0 items-center">
                                 ${topButtons}
@@ -4552,7 +4757,7 @@
             if (!file) return;
 
             if (file.type.startsWith('image/')) {
-                // HD Kalitede ama çökmeyi engelleyen güvenli sıkıştırma
+                showToast("Fotoğraf işleniyor, lütfen bekleyin...");
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = new Image();
@@ -4560,8 +4765,8 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width; let height = img.height;
                         
-                        // Sınırı 2500 px yaptık. Orijinale çok yakın, HD kalitedir ama sistemi çökertmez.
-                        const MAX_WIDTH = 2500; const MAX_HEIGHT = 2500;
+                        // Sistemin kasmaması için boyutu sınırlandırdık (Ücretsiz kullanım için şart)
+                        const MAX_WIDTH = 1200; const MAX_HEIGHT = 1200;
 
                         if (width > height) {
                             if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
@@ -4573,29 +4778,30 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // Kaliteyi %90'a çıkardık (Gözle görülür bir kalite kaybı yaşanmaz)
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        // Fotoğraf kalitesini %75'e çektik ki veri kotası dolmasın
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
                         
                         try {
                             if (!state.sharedLinks) state.sharedLinks = [];
                             state.sharedLinks.unshift({ id: 'link_' + Date.now(), text: dataUrl });
                             saveData(); 
                             renderSharedLinks(); 
-                            showToast("Fotoğraf tahtaya gönderildi!");
+                            showToast("Fotoğraf tahtaya başarıyla gönderildi!");
                         } catch (err) {
                             showToast("Hata: Dosya çok büyük, gönderilemedi!");
-                            state.sharedLinks.shift(); // Hataya düşerse bozuk veriyi sil
+                            if (state.sharedLinks.length > 0) state.sharedLinks.shift();
                         }
                     };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             } else if (file.type === 'application/pdf') {
-                if (file.size > 8 * 1024 * 1024) {
-                    showToast("PDF çok büyük! Maksimum 8MB olmalı.");
+                if (file.size > 5 * 1024 * 1024) { // PDF limitini 5MB yaptık (Kasmaması için)
+                    showToast("PDF çok büyük! Maksimum 5MB olmalı.");
                     event.target.value = '';
                     return;
                 }
+                showToast("PDF işleniyor, lütfen bekleyin...");
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
@@ -4603,10 +4809,10 @@
                         state.sharedLinks.unshift({ id: 'link_' + Date.now(), text: e.target.result });
                         saveData(); 
                         renderSharedLinks(); 
-                        showToast("PDF tahtaya gönderildi!");
+                        showToast("PDF tahtaya başarıyla gönderildi!");
                     } catch (err) {
                         showToast("Hata: Hafıza sınırı aşıldı, gönderilemedi!");
-                        state.sharedLinks.shift();
+                        if (state.sharedLinks.length > 0) state.sharedLinks.shift();
                     }
                 };
                 reader.readAsDataURL(file);
@@ -4752,6 +4958,56 @@
                 }
             }
             if (window.lucide) lucide.createIcons();
+        }
+
+        function renderBoardBadges() {
+            const container = document.getElementById('board-badges-grid');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const badgeLevels = [
+                { threshold: 0, title: 'Minik Yıldız', img: 'Rozet01_01.png' },
+                { threshold: 20, title: 'Neşeli Yıldız', img: 'Rozet01_02.png' },
+                { threshold: 50, title: 'Kuyruklu Yıldız', img: 'Rozet01_03.png' },
+                { threshold: 100, title: 'Gözlüklü Yıldız', img: 'Rozet01_04.png' },
+                { threshold: 150, title: 'Pelerinli Yıldız', img: 'Rozet01_05.png' },
+                { threshold: 200, title: 'Şövalye Yıldız', img: 'Rozet01_06.png' },
+                { threshold: 300, title: 'Jet Yıldız', img: 'Rozet01_07.png' },
+                { threshold: 400, title: 'Kral Yıldız', img: 'Rozet01_08.png' },
+                { threshold: 500, title: 'Galaksi Yıldızı', img: 'Rozet01_09.png' }
+            ];
+
+            badgeLevels.forEach(badge => {
+                const studentsInBadge = state.students.filter(s => {
+                    const sBadge = getBadgeInfo(getAllTimePos(s.id));
+                    return sBadge.title === badge.title;
+                });
+
+                const badgeBox = document.createElement('div');
+                // Dış kutunun padding değerini düşürdük, çerçeveyi doodle tarzına uygun tuttuk
+                badgeBox.className = 'doodle-box p-4 bg-white flex flex-col items-center border-[4px] min-h-[350px] shadow-sm';
+                
+                let studentsHtml = studentsInBadge.map(s => 
+                    `<div class="text-base sm:text-lg font-bold text-white px-2 py-3 rounded-xl text-center truncate border-2 border-[var(--doodle-border)] shadow-[3px_3px_0px_var(--doodle-border)] flex items-center justify-center min-h-[50px]" style="background-color: ${s.color}">
+                        ${getShortenedName(s.name)}
+                    </div>`
+                ).join('');
+
+                if(studentsInBadge.length === 0) {
+                    studentsHtml = `<div class="col-span-2 text-sm text-gray-300 italic mt-auto mb-auto">Henüz kimse yok</div>`;
+                }
+
+                badgeBox.innerHTML = `
+                    <img src="${badge.img}" class="w-20 h-20 object-contain mb-3 drop-shadow-md" alt="${badge.title}">
+                    <h4 class="text-sm font-bold text-gray-400 uppercase mb-4 border-b-2 border-dashed w-full text-center pb-2 border-gray-100">${badge.title}</h4>
+                    
+                    <div class="grid grid-cols-2 gap-2 w-full overflow-y-auto hide-scroll px-1">
+                        ${studentsHtml}
+                    </div>
+                `;
+                container.appendChild(badgeBox);
+            });
+            if(window.lucide) lucide.createIcons();
         }
 
         init();
