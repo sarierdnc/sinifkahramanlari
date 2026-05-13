@@ -86,6 +86,9 @@
         body.tahta-aktif #modal-winner .doodle-btn { font-size: 1.8rem; padding: 1.5rem 2rem; border-width: 4px; }
         body.tahta-aktif #modal-winner .doodle-btn span.text-\\[10px\\] { font-size: 1.2rem; }
 
+        /* YENİ: TAHTA MODUNDA BAĞLANTI VE NOT EKLEME KUTULARINI GİZLE */
+        body.tahta-aktif #view-links > .doodle-box { display: none !important; }
+
         .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .hide-scroll::-webkit-scrollbar { display: none; }
@@ -150,6 +153,21 @@
         }
         .board-option-btn:active {
             transform: scale(0.95);
+        }
+
+        /* YENİ: ÇİZİM TAHTASI ARKA PLANLARI */
+        .bg-canvas-white { background-color: #ffffff; }
+        .bg-canvas-black { background-color: #111827; }
+        .bg-canvas-chalkboard { background-color: #1b4d3e; } /* Kara Tahta Yeşili */
+        .bg-canvas-squared { 
+            background-color: #ffffff;
+            background-image: linear-gradient(#e5e7eb 2px, transparent 2px), linear-gradient(90deg, #e5e7eb 2px, transparent 2px);
+            background-size: 40px 40px;
+        }
+        .bg-canvas-lined {
+            background-color: #ffffff;
+            background-image: linear-gradient(#e5e7eb 2px, transparent 2px);
+            background-size: 100% 40px;
         }
     </style>
     
@@ -521,7 +539,19 @@
 
         <div id="view-links" style="display: none;" class="h-full flex-col">
                 <div class="flex justify-between items-center mb-4 shrink-0">
-                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-blue-500"></i> Link & Dosya Gönder</h2>
+                    <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="link" class="w-5 h-5 text-blue-500"></i> Dosya & Not Gönder</h2>
+                </div>
+
+                <div class="doodle-box p-3 mb-4 bg-yellow-50 border-yellow-300 shrink-0 relative overflow-hidden">
+                    <div class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded border border-red-700 transform rotate-12">YENİ</div>
+                    <label class="text-xs font-bold text-yellow-800 mb-2 flex items-center gap-1"><i data-lucide="bell-ring" class="w-4 h-4"></i> Acil Duyuru / Not Yansıt</label>
+                    <div class="flex flex-col gap-2">
+                        <textarea id="board-note-input" rows="2" placeholder="Tahtada kocaman görünecek mesajı yazın... (Örn: Herkes Türkçe kitabını açsın!)" class="w-full border-2 border-[var(--doodle-border)] rounded-lg px-2 py-2 text-sm font-bold outline-none bg-white resize-none"></textarea>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="sendBoardNote()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-yellow-600 transition-colors flex-1 flex justify-center items-center gap-2"><i data-lucide="monitor-up" class="w-4 h-4"></i> Tahtaya Yansıt</button>
+                            <button type="button" onclick="clearBoardNote()" id="btn-clear-note" style="display: none;" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-red-200 transition-colors flex justify-center items-center gap-1"><i data-lucide="monitor-off" class="w-4 h-4"></i> Kapat</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="doodle-box p-3 mb-4 bg-blue-50 border-blue-200 shrink-0">
@@ -662,6 +692,73 @@
                 </div>
 
                 <div id="active-mission-status" style="display: none;" class="doodle-box p-3 bg-gray-50 border-gray-300 w-full min-h-[250px] mb-8 text-center">
+                </div>
+            </div>
+
+            <div id="view-drawing" style="display: none;" class="h-full flex-col">
+                <div class="doodle-box p-3 mb-4 bg-white flex flex-wrap gap-4 items-center justify-between shrink-0 z-10 shadow-sm">
+                    
+                    <div class="grid grid-cols-8 gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200 justify-items-center shrink-0">
+                        <button onclick="setDrawColor('#1e293b', this)" class="color-btn w-7 h-7 rounded-full bg-[#1e293b] border-2 border-[var(--doodle-border)] shadow-sm ring-4 ring-gray-400 scale-110 transition-all"></button>
+                        <button onclick="setDrawColor('#ffffff', this)" class="color-btn w-7 h-7 rounded-full bg-[#ffffff] border-2 border-[var(--doodle-border)] shadow-sm transition-all"></button>
+                        <button onclick="setDrawColor('#ef4444', this)" class="color-btn w-7 h-7 rounded-full bg-[#ef4444] border-2 border-[var(--doodle-border)] shadow-sm transition-all"></button>
+                        <button onclick="setDrawColor('#f97316', this)" class="color-btn w-7 h-7 rounded-full bg-[#f97316] border-2 border-[var(--doodle-border)] shadow-sm transition-all"></button>
+                        <button onclick="setDrawColor('#eab308', this)" class="color-btn w-7 h-7 rounded-full bg-[#eab308] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Koyu Sarı"></button>
+                        <button onclick="setDrawColor('#22c55e', this)" class="color-btn w-7 h-7 rounded-full bg-[#22c55e] border-2 border-[var(--doodle-border)] shadow-sm transition-all"></button>
+                        <button onclick="setDrawColor('#3b82f6', this)" class="color-btn w-7 h-7 rounded-full bg-[#3b82f6] border-2 border-[var(--doodle-border)] shadow-sm transition-all"></button>
+                        <button onclick="setDrawColor('#a855f7', this)" class="color-btn w-7 h-7 rounded-full bg-[#a855f7] border-2 border-[var(--doodle-border)] shadow-sm transition-all"></button>
+                        
+                        <button onclick="setDrawColor('#94a3b8', this)" class="color-btn w-7 h-7 rounded-full bg-[#94a3b8] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Gri"></button>
+                        <button onclick="setDrawColor('#fbcfe8', this)" class="color-btn w-7 h-7 rounded-full bg-[#fbcfe8] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Açık Pembe"></button>
+                        <button onclick="setDrawColor('#ec4899', this)" class="color-btn w-7 h-7 rounded-full bg-[#ec4899] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Pembe"></button>
+                        <button onclick="setDrawColor('#84cc16', this)" class="color-btn w-7 h-7 rounded-full bg-[#84cc16] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Açık Yeşil"></button>
+                        <button onclick="setDrawColor('#fef08a', this)" class="color-btn w-7 h-7 rounded-full bg-[#fef08a] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Açık Sarı"></button>
+                        <button onclick="setDrawColor('#06b6d4', this)" class="color-btn w-7 h-7 rounded-full bg-[#06b6d4] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Turkuaz"></button>
+                        <button onclick="setDrawColor('#6366f1', this)" class="color-btn w-7 h-7 rounded-full bg-[#6366f1] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="İndigo"></button>
+                        <button onclick="setDrawColor('#c084fc', this)" class="color-btn w-7 h-7 rounded-full bg-[#c084fc] border-2 border-[var(--doodle-border)] shadow-sm transition-all" title="Açık Mor"></button>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 items-center bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <div class="flex gap-1 border-r-2 border-gray-200 pr-2">
+                            <button id="btn-draw-pen" onclick="setDrawMode('pen')" class="tool-btn p-2 rounded-lg bg-gray-800 text-white border-2 border-[var(--doodle-border)] shadow-sm" title="Normal Kalem"><i data-lucide="pen-tool" class="w-5 h-5"></i></button>
+                            <button id="btn-draw-highlighter" onclick="setDrawMode('highlighter')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm" title="Fosforlu Kalem"><i data-lucide="highlighter" class="w-5 h-5"></i></button>
+                        </div>
+
+                        <div class="flex gap-1 border-r-2 border-gray-200 pr-2">
+                            <button id="btn-draw-line" onclick="setDrawMode('line')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm" title="Düz Çizgi"><i data-lucide="minus" class="w-5 h-5"></i></button>
+                            <button id="btn-draw-arrow" onclick="setDrawMode('arrow')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm" title="Ok"><i data-lucide="arrow-up-right" class="w-5 h-5"></i></button>
+                            <button id="btn-draw-rect" onclick="setDrawMode('rect')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm" title="Kare/Dikdörtgen"><i data-lucide="square" class="w-5 h-5"></i></button>
+                            <button id="btn-draw-circle" onclick="setDrawMode('circle')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm" title="Çember/Daire"><i data-lucide="circle" class="w-5 h-5"></i></button>
+                            <button id="btn-draw-triangle" onclick="setDrawMode('triangle')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm" title="Üçgen"><i data-lucide="triangle" class="w-5 h-5"></i></button>
+                        </div>
+
+                        <div class="flex gap-3 items-center">
+                            <div class="flex flex-col items-center">
+                                <input type="range" id="draw-size-slider" min="2" max="40" value="5" oninput="setDrawSize(this.value)" class="w-20 accent-blue-500">
+                                <span class="text-[10px] font-bold text-gray-500" id="draw-size-display">5px</span>
+                            </div>
+                            <button id="btn-eraser" onclick="setDrawMode('eraser')" class="tool-btn p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] font-bold flex items-center gap-1 shadow-sm transition-colors hover:bg-gray-100"><i data-lucide="eraser" class="w-5 h-5"></i> Silgi</button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 items-center">
+                        <select id="canvas-bg-selector" onchange="changeCanvasBg(this.value)" class="border-2 border-[var(--doodle-border)] rounded-lg p-2 font-bold text-sm outline-none bg-gray-50">
+                            <option value="white">Boş Beyaz</option>
+                            <option value="squared">Kareli Defter</option>
+                            <option value="lined">Çizgili Defter</option>
+                            <option value="chalkboard">Kara Tahta</option>
+                            <option value="black">Boş Siyah</option>
+                        </select>
+                        <button onclick="undoCanvas()" class="p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm hover:bg-gray-100" title="Geri Al"><i data-lucide="undo" class="w-5 h-5"></i></button>
+                        <button onclick="redoCanvas()" class="p-2 rounded-lg bg-white text-gray-600 border-2 border-[var(--doodle-border)] shadow-sm hover:bg-gray-100" title="İleri Al"><i data-lucide="redo" class="w-5 h-5"></i></button>
+                        <button onclick="clearCanvas()" class="p-2 rounded-lg bg-red-50 text-red-600 border-2 border-red-200 font-bold shadow-sm hover:bg-red-100 flex items-center gap-1" title="Hepsini Sil"><i data-lucide="trash-2" class="w-5 h-5"></i> Temizle</button>
+                        <div class="w-px h-8 bg-gray-300 mx-1"></div>
+                        <button onclick="toggleDrawingFullscreen()" id="btn-fullscreen" class="p-2 rounded-lg bg-blue-50 text-blue-600 border-2 border-blue-200 font-bold shadow-sm hover:bg-blue-100 flex items-center gap-1" title="Tam Ekran"><i data-lucide="maximize" class="w-5 h-5"></i> <span class="hidden sm:inline">Tam Ekran</span></button>
+                    </div>
+                </div>
+
+                <div id="canvas-container" class="flex-1 relative rounded-xl border-4 border-[var(--doodle-border)] overflow-hidden shadow-inner cursor-crosshair touch-none bg-canvas-white">
+                    <canvas id="board-canvas" class="absolute top-0 left-0 w-full h-full"></canvas>
                 </div>
             </div>
 
@@ -1002,6 +1099,18 @@
                 
                 <div id="history-list" class="flex-1 overflow-y-auto space-y-2 hide-scroll">
                     </div>
+            </div>
+        </div>
+
+        <div id="modal-board-note" style="display: none;" class="fixed inset-0 bg-yellow-400/90 backdrop-blur-sm z-[9999] justify-center items-center p-4 sm:p-10">
+            <div class="mission-popup doodle-box bg-white w-full max-w-5xl p-8 sm:p-16 text-center relative border-8 border-yellow-600 flex flex-col items-center justify-center min-h-[60vh] shadow-2xl transform rotate-1">
+                <div class="absolute -top-6 bg-red-500 w-12 h-12 rounded-full border-4 border-gray-800 shadow-md"></div>
+                
+                <button type="button" onclick="closeBoardNote()" class="absolute top-4 right-6 text-5xl font-bold text-gray-400 hover:text-black transition-colors cursor-pointer z-[1001]">&times;</button>
+
+                <h2 class="text-4xl sm:text-7xl font-bold text-gray-800 leading-tight font-family-inherit" id="board-note-text" style="line-height: 1.2;">
+                    Not buraya gelecek...
+                </h2>
             </div>
         </div>
 
@@ -1553,6 +1662,7 @@
             const tabs = [
                 { id: 'activities', name: '🎯 Etkinlikler', target: 'view-activities' },
                 { id: 'board-badges', name: '🏅 Rozetler', target: 'view-board-badges' },
+                { id: 'drawing', name: '🎨 Çizim', target: 'view-drawing' },
                 { id: 'report', name: '📊 Sıralamalar', target: 'view-report' },
                 { id: 'links', name: '🔗 Bağlantılar', target: 'view-links' }
             ];
@@ -1578,7 +1688,7 @@
 
         function switchBoardTab(tabId) {
             // Tüm ana sekmeleri gizle
-            ['view-scoring', 'view-attendance', 'view-students', 'view-activities', 'view-report', 'view-homework', 'view-seating', 'view-links', 'view-board-badges'].forEach(id => {
+            ['view-scoring', 'view-attendance', 'view-students', 'view-activities', 'view-report', 'view-homework', 'view-seating', 'view-links', 'view-board-badges', 'view-drawing'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.style.display = 'none';
             });
@@ -1604,6 +1714,8 @@
                 renderReport();
             } else if (tabId === 'board-badges') {
                 renderBoardBadges();
+            } else if (tabId === 'drawing') {
+                initDrawingBoard();
             }
         }
         
@@ -1786,6 +1898,7 @@
                     try { renderSavedLines(); } catch(e){}
                     try { renderSharedLinks(); } catch(e){}
                     try { syncBoardMission(); } catch(e){}
+                    try { syncBoardNote(); } catch(e){}
                     try { if(document.getElementById('view-board-badges').style.display !== 'none') renderBoardBadges(); } catch(e){}
 
                     if (typeof isBoardMode !== 'undefined' && isBoardMode) {
@@ -5002,16 +5115,337 @@
                 }
 
                 badgeBox.innerHTML = `
-                    <img src="${badge.img}" class="w-20 h-20 object-contain mb-3 drop-shadow-md" alt="${badge.title}">
-                    <h4 class="text-sm font-bold text-gray-400 uppercase mb-4 border-b-2 border-dashed w-full text-center pb-2 border-gray-100">${badge.title}</h4>
-                    
-                    <div class="grid grid-cols-2 gap-2 w-full overflow-y-auto hide-scroll px-1">
-                        ${studentsHtml}
-                    </div>
-                `;
-                container.appendChild(badgeBox);
+                        <img src="${badge.img}" class="w-20 h-20 object-contain mb-3 drop-shadow-md" alt="${badge.title}">
+                        <h4 class="text-sm font-bold text-gray-400 uppercase mb-4 border-b-2 border-dashed w-full text-center pb-2 border-gray-100">${badge.title}</h4>
+                        
+                        <div class="grid grid-cols-2 gap-2 w-full overflow-y-auto hide-scroll px-1">
+                            ${studentsHtml}
+                        </div>
+                    `;
+                    container.appendChild(badgeBox);
+                });
+                if(window.lucide) lucide.createIcons();
+            }
+
+        // --- YENİ: TAHTA NOTU FONKSİYONLARI ---
+        function sendBoardNote() {
+            const text = document.getElementById('board-note-input').value.trim();
+            if (!text) { showToast("Lütfen bir not yazın!"); return; }
+            
+            state.activeBoardNote = text;
+            saveData();
+            syncBoardNote();
+            showToast("Not tahtaya yansıtıldı!");
+        }
+
+        function clearBoardNote() {
+            state.activeBoardNote = null;
+            saveData();
+            syncBoardNote();
+            showToast("Not tahtadan kaldırıldı.");
+        }
+
+        function closeBoardNote() {
+            state.activeBoardNote = null;
+            saveData();
+            syncBoardNote();
+        }
+
+        // --- YENİ: ÇİZİM TAHTASI (CANVAS) FONKSİYONLARI ---
+        let canvas, ctx;
+        let isDrawing = false;
+        let currentDrawMode = 'pen';
+        let currentDrawColor = '#1e293b';
+        let currentDrawSize = 5;
+        let canvasHistory = [];
+        let canvasStep = -1;
+        let startPos = {x:0, y:0};
+        let snapshot = null;
+        let currentPath = []; // YENİ: Fosforlu kalem yolu için
+
+        function initDrawingBoard() {
+            if (canvas) return; // Zaten kurulduysa dokunma, CSS yeniden boyutlandırmayı halledecek!
+            
+            canvas = document.getElementById('board-canvas');
+            ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // 1. ÇÖZÜM: Çözünürlüğü Full HD (1920x1080) olarak SABİTLİYORUZ.
+            // Bu sayede pikseller asla yeniden hesaplanmaz, kalite zerre düşmez, şekiller bozulmaz!
+            canvas.width = 1920;
+            canvas.height = 1080;
+            
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            canvas.addEventListener('mousedown', startPosition);
+            canvas.addEventListener('mouseup', endPosition);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', startPosition, {passive: false});
+            canvas.addEventListener('touchend', endPosition);
+            canvas.addEventListener('touchmove', draw, {passive: false});
+            
+            // Başlangıç arka planını canvas'a taşı (Kare/çizgili arka planın kaymasını önler)
+            const type = document.getElementById('canvas-bg-selector').value || 'white';
+            changeCanvasBg(type);
+            
+            saveCanvasState();
+        }
+
+        function resizeCanvas() {
+            // İÇİ BOŞALTILDI! Artık tarayıcının CSS motoru kaliteyi zerre düşürmeden 
+            // ve resmi kırpmadan otomatik boyutlandırma yapıyor. Pikseller sabit kaldı.
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            // CSS ile boyutlandırılmış Canvas'ın ekrandaki gerçek oranını hesapla
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            return { 
+                x: (clientX - rect.left) * scaleX, 
+                y: (clientY - rect.top) * scaleY 
+            };
+        }
+
+        function startPosition(e) {
+            e.preventDefault();
+            isDrawing = true;
+            startPos = getMousePos(e);
+            snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            if (currentDrawMode === 'highlighter') {
+                currentPath = [startPos];
+            } else if (['pen', 'eraser'].includes(currentDrawMode)) {
+                ctx.beginPath();
+                ctx.moveTo(startPos.x, startPos.y);
+            }
+        }
+
+        function endPosition() {
+            if (isDrawing) {
+                isDrawing = false;
+                saveCanvasState();
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            
+            // Stil Ayarları
+            // Canvas çözünürlüğü Full HD'ye kilitlendiği için fırçanın ekranda ince kalmaması için kalınlığı artırıyoruz
+            ctx.lineWidth = currentDrawSize * 2;
+            ctx.globalAlpha = (currentDrawMode === 'highlighter') ? 0.4 : 1.0;
+            ctx.globalCompositeOperation = (currentDrawMode === 'eraser') ? 'destination-out' : 'source-over';
+            
+            ctx.strokeStyle = currentDrawColor;
+            const bgType = document.getElementById('canvas-bg-selector').value;
+            if ((bgType === 'black' || bgType === 'chalkboard') && currentDrawColor === '#1e293b') ctx.strokeStyle = '#ffffff';
+
+            if (currentDrawMode === 'highlighter') {
+                // Fosforlu kalemde üst üste binip koyulaşmayı önlemek için snapshot üzerine tüm yolu tek seferde çizeriz
+                currentPath.push(pos);
+                ctx.putImageData(snapshot, 0, 0);
+                ctx.beginPath();
+                ctx.moveTo(currentPath[0].x, currentPath[0].y);
+                for (let i = 1; i < currentPath.length; i++) {
+                    ctx.lineTo(currentPath[i].x, currentPath[i].y);
+                }
+                ctx.stroke();
+            } else if (['pen', 'eraser'].includes(currentDrawMode)) {
+                // Normal kalem ve silgi için sürekli çizim düzeltmesi
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            } else {
+                // Şekil Çizimi (Önizleme için snapshot geri yüklenir)
+                ctx.putImageData(snapshot, 0, 0);
+                drawShape(startPos, pos);
+            }
+        }
+
+        function drawShape(start, end) {
+            ctx.beginPath();
+            const w = end.x - start.x;
+            const h = end.y - start.y;
+
+            if (currentDrawMode === 'line') {
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+            } else if (currentDrawMode === 'rect') {
+                ctx.strokeRect(start.x, start.y, w, h);
+            } else if (currentDrawMode === 'circle') {
+                const radius = Math.sqrt(w*w + h*h);
+                ctx.arc(start.x, start.y, radius, 0, Math.PI * 2);
+            } else if (currentDrawMode === 'triangle') {
+                ctx.moveTo(start.x + w / 2, start.y);
+                ctx.lineTo(start.x, start.y + h);
+                ctx.lineTo(start.x + w, start.y + h);
+                ctx.closePath();
+            } else if (currentDrawMode === 'arrow') {
+                const headlen = currentDrawSize * 3;
+                const angle = Math.atan2(h, w);
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.lineTo(end.x - headlen * Math.cos(angle - Math.PI / 6), end.y - headlen * Math.sin(angle - Math.PI / 6));
+                ctx.moveTo(end.x, end.y);
+                ctx.lineTo(end.x - headlen * Math.cos(angle + Math.PI / 6), end.y - headlen * Math.sin(angle + Math.PI / 6));
+            }
+            ctx.stroke();
+        }
+
+        function setDrawMode(mode) {
+            currentDrawMode = mode;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-800', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-600');
             });
-            if(window.lucide) lucide.createIcons();
+            const activeBtn = document.getElementById('btn-draw-' + mode) || document.getElementById('btn-eraser');
+            if(activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-600');
+                activeBtn.classList.add('bg-gray-800', 'text-white');
+            }
+        }
+
+        function setDrawColor(color, btnEl) {
+            currentDrawColor = color;
+            if (currentDrawMode === 'eraser') setDrawMode('pen');
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-4', 'ring-gray-400', 'scale-110'));
+            if(btnEl) btnEl.classList.add('ring-4', 'ring-gray-400', 'scale-110');
+        }
+
+        function setDrawSize(size) {
+            currentDrawSize = size;
+            document.getElementById('draw-size-display').innerText = size + 'px';
+        }
+
+        function changeCanvasBg(type) {
+            const container = document.getElementById('canvas-container');
+            const canvasEl = document.getElementById('board-canvas');
+            
+            // Konteyneri gri bir tabana çekip, resmi merkeze sabitlemek için flex kullanıyoruz.
+            container.className = `flex-1 relative rounded-xl border-4 border-[var(--doodle-border)] overflow-hidden shadow-inner cursor-crosshair touch-none bg-gray-300 flex items-center justify-center`;
+            
+            // Arka plan karelerini/çizgilerini doğrudan Canvas'a veriyoruz ki resimle birlikte orantılı büyüsünler! (bg-white eklentisi kaldırıldı, çakışma yapıyordu)
+            canvasEl.className = `bg-canvas-${type}`;
+            
+            // Canvas'ın CSS ile orantılı ölçeklenmesi için stil atamaları:
+            canvasEl.style.maxWidth = '100%';
+            canvasEl.style.maxHeight = '100%';
+            canvasEl.style.width = 'auto';
+            canvasEl.style.height = 'auto';
+            canvasEl.style.aspectRatio = '16 / 9';
+            canvasEl.style.boxShadow = '0 0 20px rgba(0,0,0,0.15)';
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            saveCanvasState();
+        }
+
+        function saveCanvasState() {
+            canvasStep++;
+            if (canvasStep < canvasHistory.length) canvasHistory.length = canvasStep; 
+            canvasHistory.push(canvas.toDataURL());
+        }
+
+        function undoCanvas() {
+            if (canvasStep > 0) {
+                canvasStep--;
+                let canvasPic = new Image();
+                canvasPic.src = canvasHistory[canvasStep];
+                canvasPic.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(canvasPic, 0, 0); }
+            }
+        }
+
+        function redoCanvas() {
+            if (canvasStep < canvasHistory.length - 1) {
+                canvasStep++;
+                let canvasPic = new Image();
+                canvasPic.src = canvasHistory[canvasStep];
+                canvasPic.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(canvasPic, 0, 0); }
+            }
+        }
+
+        // TAM EKRAN KONTROLLERİ
+        function toggleDrawingFullscreen() {
+            const drawingView = document.getElementById('view-drawing');
+            
+            if (!document.fullscreenElement) {
+                // Tam ekrana geçerken arka planın siyah olmaması için krem rengi atıyoruz
+                drawingView.style.backgroundColor = 'var(--bg-color)';
+                drawingView.style.padding = '1rem';
+                
+                if (drawingView.requestFullscreen) {
+                    drawingView.requestFullscreen();
+                } else if (drawingView.webkitRequestFullscreen) { /* Safari */
+                    drawingView.webkitRequestFullscreen();
+                } else if (drawingView.msRequestFullscreen) { /* IE11 */
+                    drawingView.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE11 */
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // Tam ekrandan çıkış/giriş durumunu dinleyip ikonu ve boyutu güncelleme
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            const btn = document.getElementById('btn-fullscreen');
+            const drawingView = document.getElementById('view-drawing');
+            
+            if (!document.fullscreenElement) {
+                btn.innerHTML = '<i data-lucide="maximize" class="w-5 h-5"></i> <span class="hidden sm:inline">Tam Ekran</span>';
+                drawingView.style.backgroundColor = '';
+                drawingView.style.padding = '';
+            } else {
+                btn.innerHTML = '<i data-lucide="minimize" class="w-5 h-5"></i> <span class="hidden sm:inline">Küçült</span>';
+            }
+            lucide.createIcons();
+            
+            // Ekran boyutu değiştiği için tuvali kayıpsız yeniden boyutlandır (Animasyon payı ile)
+            setTimeout(resizeCanvas, 150); 
+        }
+
+        function syncBoardNote() {
+            const modal = document.getElementById('modal-board-note');
+            const btnClear = document.getElementById('btn-clear-note');
+            if (!modal) return;
+
+            if (btnClear && (typeof isBoardMode === 'undefined' || !isBoardMode)) {
+                btnClear.style.display = state.activeBoardNote ? 'flex' : 'none';
+            }
+
+            if (typeof isBoardMode !== 'undefined' && isBoardMode) {
+                if (state.activeBoardNote) {
+                    document.getElementById('board-note-text').innerText = state.activeBoardNote;
+                    modal.style.display = 'flex';
+                    
+                    if (modal.dataset.lastNote !== state.activeBoardNote) {
+                        const audio = document.getElementById('alarm-sound');
+                        if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+                        modal.dataset.lastNote = state.activeBoardNote;
+                    }
+                } else {
+                    modal.style.display = 'none';
+                    modal.dataset.lastNote = '';
+                }
+            }
         }
 
         init();
