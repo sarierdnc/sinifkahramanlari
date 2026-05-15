@@ -547,7 +547,14 @@
                     <label class="text-xs font-bold text-yellow-800 mb-2 flex items-center gap-1"><i data-lucide="bell-ring" class="w-4 h-4"></i> Acil Duyuru / Not Yansıt</label>
                     <div class="flex flex-col gap-2">
                         <textarea id="board-note-input" rows="2" placeholder="Tahtada kocaman görünecek mesajı yazın... (Örn: Herkes Türkçe kitabını açsın!)" class="w-full border-2 border-[var(--doodle-border)] rounded-lg px-2 py-2 text-sm font-bold outline-none bg-white resize-none"></textarea>
-                        <div class="flex gap-2">
+                        <div id="board-note-options-input-container" class="flex flex-col gap-2">
+                            <div class="flex gap-2">
+                                <input type="text" id="new-note-opt-input" placeholder="Seçenek Ekle (Örn: Hazırız)" class="flex-1 border-2 border-[var(--doodle-border)] rounded-lg px-2 py-1 text-xs font-bold outline-none bg-white">
+                                <button type="button" onclick="addNoteOption()" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg border border-blue-300 font-bold text-xs"><i data-lucide="plus" class="w-4 h-4"></i> Ekle</button>
+                            </div>
+                            <div id="current-note-options" class="flex flex-wrap gap-1"></div>
+                        </div>
+                        <div class="flex gap-2 mt-1">
                             <button type="button" onclick="sendBoardNote()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-yellow-600 transition-colors flex-1 flex justify-center items-center gap-2"><i data-lucide="monitor-up" class="w-4 h-4"></i> Tahtaya Yansıt</button>
                             <button type="button" onclick="clearBoardNote()" id="btn-clear-note" style="display: none;" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-red-200 transition-colors flex justify-center items-center gap-1"><i data-lucide="monitor-off" class="w-4 h-4"></i> Kapat</button>
                         </div>
@@ -1106,11 +1113,13 @@
             <div class="mission-popup doodle-box bg-white w-full max-w-5xl p-8 sm:p-16 text-center relative border-8 border-yellow-600 flex flex-col items-center justify-center min-h-[60vh] shadow-2xl transform rotate-1">
                 <div class="absolute -top-6 bg-red-500 w-12 h-12 rounded-full border-4 border-gray-800 shadow-md"></div>
                 
-                <button type="button" onclick="closeBoardNote()" class="absolute top-4 right-6 text-5xl font-bold text-gray-400 hover:text-black transition-colors cursor-pointer z-[1001]">&times;</button>
-
-                <h2 class="text-4xl sm:text-7xl font-bold text-gray-800 leading-tight font-family-inherit" id="board-note-text" style="line-height: 1.2;">
+                <h2 class="text-4xl sm:text-7xl font-bold text-gray-800 leading-tight font-family-inherit mb-8" id="board-note-text" style="line-height: 1.2;">
                     Not buraya gelecek...
                 </h2>
+                <div id="board-note-options-display" class="flex flex-wrap justify-center gap-4 w-full mt-4">
+                    </div>
+                <div id="board-note-answer-display" style="display: none;" class="mt-8 text-4xl sm:text-5xl font-bold text-green-600 bg-green-100 px-8 py-4 rounded-2xl border-4 border-green-300 shadow-sm animate-bounce">
+                    </div>
             </div>
         </div>
 
@@ -2128,8 +2137,7 @@
             state.targets.forEach(target => {
                 let oldScore = target.currentScore;
                 target.currentScore += points;
-                // YENİ: Arka planda eksiye (borca) düşmesine izin veriyoruz, sadece üst limiti koruyoruz
-                if (target.currentScore > target.requiredScore) target.currentScore = target.requiredScore;
+                // Üst limit korumasını kaldırdık, artık hedefi geçebilir.
                 deltas[target.id] = target.currentScore - oldScore; // Puanın hedefi ne kadar etkilediğini kaydet
             });
             return deltas;
@@ -2252,11 +2260,13 @@
         function updateTargetUI() {
             if (!state.targets) state.targets = [];
             
+            let needsSave = false;
+            
             // ESKİ TEKLİ HEDEF VERİSİ VARSA YENİ SİSTEME GÖÇ ETTİR VE ESKİYİ SİL
             if (state.targetConfig && state.targetConfig.isActive) {
                 state.targets.push({ id: 't_old_' + Date.now(), name: state.targetConfig.name, requiredScore: state.targetConfig.requiredScore, currentScore: state.targetConfig.currentScore, period: state.targetConfig.period, notified: state.targetConfig.notified });
                 delete state.targetConfig; // Çöp veriyi tutma, tamamen sil.
-                saveData();
+                needsSave = true;
             }
 
             const listContainer = document.getElementById('active-targets-list');
@@ -2272,6 +2282,7 @@
             if (state.targets.length === 0) {
                 listContainer.innerHTML = '<div class="text-center text-gray-400 mt-6"><i data-lucide="target" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>Henüz aktif bir hedef yok.</div>';
                 if(window.lucide) lucide.createIcons();
+                if(needsSave) saveData();
                 return;
             }
 
@@ -2286,7 +2297,7 @@
 
                 if (percentage >= 100 && !target.notified) {
                     showToast("🎉 " + target.name + " TAMAMLANDI! 🎉"); createConfetti();
-                    target.notified = true; saveData();
+                    target.notified = true; needsSave = true;
                 }
 
                 const periodMap = { 'gunluk': 'GÜNLÜK', 'haftalik': 'HAFTALIK', 'aylik': 'AYLIK' };
@@ -2333,7 +2344,7 @@
                         </div>
                     </div>
                     <div class="flex justify-between w-full font-bold ${isBoard ? 'text-lg' : 'text-[11px]'}">
-                        <span class="text-blue-600">${Math.max(0, Math.floor(target.currentScore))} Puan</span>
+                        <span class="text-blue-600">${Math.max(0, Math.floor(target.currentScore))} Puan ${target.currentScore > target.requiredScore ? `<span class="text-green-500 text-[10px] ml-1">(+${Math.floor(target.currentScore - target.requiredScore)} Fazla)</span>` : ''}</span>
                         <span class="text-gray-500">Hedef: ${target.requiredScore}</span>
                     </div>
                 </div>`;
@@ -2372,6 +2383,8 @@
 
             // Arşivi de her seferinde güncelle
             renderCompletedTargets();
+            
+            if (needsSave) saveData();
         }
 
         // --- YENİ: SÜRE BİTİNCE YANIP SÖNME EFEKTİ ---
@@ -2917,7 +2930,6 @@
                 state.targets.forEach(target => {
                     if (action.targetDeltas[target.id]) {
                         target.currentScore -= action.targetDeltas[target.id]; // Sadece oynattığı kadar geri al
-                        if (target.currentScore > target.requiredScore) target.currentScore = target.requiredScore;
                     }
                 });
             }
@@ -2940,7 +2952,6 @@
                 state.targets.forEach(target => {
                     if (action.targetDeltas[target.id]) {
                         target.currentScore += action.targetDeltas[target.id]; // Sadece oynattığı kadar ileri al
-                        if (target.currentScore > target.requiredScore) target.currentScore = target.requiredScore;
                     }
                 });
             }
@@ -4402,7 +4413,6 @@
                     if (action.targetDeltas[target.id]) {
                         target.currentScore -= action.targetDeltas[target.id];
                         if (target.currentScore < 0) target.currentScore = 0;
-                        if (target.currentScore > target.requiredScore) target.currentScore = target.requiredScore;
                     }
                 });
             }
@@ -5128,11 +5138,72 @@
             }
 
         // --- YENİ: TAHTA NOTU FONKSİYONLARI ---
+        let pendingNoteOptions = [];
+        let lastKnownNoteAnswer = null; // Telefondaki bildirimi kontrol etmek için
+
+        function addNoteOption() {
+            const input = document.getElementById('new-note-opt-input');
+            const val = input.value.trim();
+            if (!val) return;
+            pendingNoteOptions.push(val);
+            input.value = '';
+            renderNoteOptionsInput();
+        }
+
+        function removeNoteOption(index) {
+            pendingNoteOptions.splice(index, 1);
+            renderNoteOptionsInput();
+        }
+
+        function renderNoteOptionsInput() {
+            const container = document.getElementById('current-note-options');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Not henüz gönderilmediyse (Hazırlık aşaması)
+            if (!state.activeBoardNote) {
+                pendingNoteOptions.forEach((opt, idx) => {
+                    container.innerHTML += `
+                        <div class="bg-blue-50 border border-blue-200 text-blue-700 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                            ${opt}
+                            <button type="button" onclick="removeNoteOption(${idx})" class="text-red-500 hover:text-red-700 ml-1"><i data-lucide="x" class="w-3 h-3"></i></button>
+                        </div>
+                    `;
+                });
+            } 
+            // Not tahtada aktifse ve cevap bekleniyor veya geldiyse
+            else {
+                const options = state.activeBoardNote.options || [];
+                const answer = state.activeBoardNote.answer;
+
+                options.forEach((opt) => {
+                    const isSelected = (opt === answer);
+                    // Eğer seçilen cevapsa yeşil yap ve yanıp söndür (animate-pulse)
+                    const activeClass = isSelected 
+                        ? 'bg-green-500 text-white border-green-700 animate-pulse scale-110 shadow-lg' 
+                        : 'bg-gray-100 text-gray-400 border-gray-200 opacity-70';
+
+                    container.innerHTML += `
+                        <div class="${activeClass} border-2 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-500">
+                            ${isSelected ? '✓ ' : ''}${opt}
+                        </div>
+                    `;
+                });
+            }
+            if(window.lucide) lucide.createIcons();
+        }
+
         function sendBoardNote() {
             const text = document.getElementById('board-note-input').value.trim();
             if (!text) { showToast("Lütfen bir not yazın!"); return; }
             
-            state.activeBoardNote = text;
+            state.activeBoardNote = {
+                text: text,
+                options: [...pendingNoteOptions],
+                answer: null,
+                isLocked: false
+            };
+            
             saveData();
             syncBoardNote();
             showToast("Not tahtaya yansıtıldı!");
@@ -5140,6 +5211,10 @@
 
         function clearBoardNote() {
             state.activeBoardNote = null;
+            pendingNoteOptions = [];
+            lastKnownNoteAnswer = null;
+            renderNoteOptionsInput();
+            document.getElementById('board-note-input').value = '';
             saveData();
             syncBoardNote();
             showToast("Not tahtadan kaldırıldı.");
@@ -5147,6 +5222,14 @@
 
         function closeBoardNote() {
             state.activeBoardNote = null;
+            saveData();
+            syncBoardNote();
+        }
+
+        function selectBoardNoteOption(index) {
+            if (!state.activeBoardNote || state.activeBoardNote.isLocked) return;
+            state.activeBoardNote.answer = state.activeBoardNote.options[index];
+            state.activeBoardNote.isLocked = true;
             saveData();
             syncBoardNote();
         }
@@ -5427,24 +5510,73 @@
             const btnClear = document.getElementById('btn-clear-note');
             if (!modal) return;
 
-            if (btnClear && (typeof isBoardMode === 'undefined' || !isBoardMode)) {
-                btnClear.style.display = state.activeBoardNote ? 'flex' : 'none';
+            // TELEFON EKRANI KONTROLÜ
+            if (typeof isBoardMode === 'undefined' || !isBoardMode) {
+                if (btnClear) btnClear.style.display = state.activeBoardNote ? 'flex' : 'none';
+                
+                // Telefon ekranındaki seçenekleri güncelle (Cevap geldiyse renkli yanması için)
+                renderNoteOptionsInput();
+
+                // Telefon ekranındayken cevap gelmişse bildir
+                if (state.activeBoardNote && state.activeBoardNote.answer && state.activeBoardNote.answer !== lastKnownNoteAnswer) {
+                    lastKnownNoteAnswer = state.activeBoardNote.answer;
+                    const audio = document.getElementById('alarm-sound');
+                    if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+                    showToast(`Sınıfın Cevabı: ${state.activeBoardNote.answer}`);
+                }
+                if (!state.activeBoardNote) lastKnownNoteAnswer = null;
+                return;
             }
 
-            if (typeof isBoardMode !== 'undefined' && isBoardMode) {
-                if (state.activeBoardNote) {
-                    document.getElementById('board-note-text').innerText = state.activeBoardNote;
-                    modal.style.display = 'flex';
-                    
-                    if (modal.dataset.lastNote !== state.activeBoardNote) {
+            // TAHTA EKRANI KONTROLÜ
+            if (state.activeBoardNote) {
+                // Eski string versiyonuyla uyumluluk (çökme olmasın diye)
+                const text = typeof state.activeBoardNote === 'string' ? state.activeBoardNote : state.activeBoardNote.text;
+                const options = state.activeBoardNote.options || [];
+                const answer = state.activeBoardNote.answer;
+                const isLocked = state.activeBoardNote.isLocked;
+
+                document.getElementById('board-note-text').innerText = text;
+                modal.style.display = 'flex';
+                
+                const optContainer = document.getElementById('board-note-options-display');
+                const ansContainer = document.getElementById('board-note-answer-display');
+                
+                if (optContainer && ansContainer) {
+                    optContainer.innerHTML = '';
+                    if (options.length > 0 && !isLocked) {
+                        optContainer.style.display = 'flex';
+                        ansContainer.style.display = 'none';
+                        options.forEach((opt, idx) => {
+                            optContainer.innerHTML += `
+                                <button onclick="selectBoardNoteOption(${idx})" class="doodle-btn doodle-btn-accent text-3xl font-bold px-8 py-4 m-2 hover:scale-105 transition-transform">
+                                    ${opt}
+                                </button>
+                            `;
+                        });
+                    } else if (isLocked && answer) {
+                        optContainer.style.display = 'none';
+                        ansContainer.style.display = 'block';
+                        ansContainer.innerHTML = `<span class="text-xl block text-green-800 opacity-70 mb-1">Seçilen Cevap:</span>${answer}`;
+                    } else {
+                        optContainer.style.display = 'none';
+                        ansContainer.style.display = 'none';
+                    }
+                }
+
+                // Gelen not için ses çalma mantığı
+                const currentStateString = typeof state.activeBoardNote === 'string' ? state.activeBoardNote : JSON.stringify(state.activeBoardNote);
+                if (modal.dataset.lastNote !== currentStateString) {
+                    // Sadece yeni bir not ilk kez geldiğinde (henüz kilitlenmemişken) ses çal
+                    if (!isLocked) {
                         const audio = document.getElementById('alarm-sound');
                         if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
-                        modal.dataset.lastNote = state.activeBoardNote;
                     }
-                } else {
-                    modal.style.display = 'none';
-                    modal.dataset.lastNote = '';
+                    modal.dataset.lastNote = currentStateString;
                 }
+            } else {
+                modal.style.display = 'none';
+                modal.dataset.lastNote = '';
             }
         }
 
